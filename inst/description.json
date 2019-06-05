@@ -1,0 +1,27 @@
+{
+  "moduleDescription" :
+  {
+    "title" : "Bayesian Meta Analysis",
+    "description": "Meta Analysis with Bayesian Model Averaging and Random Order Constraints.",
+    "version": 1,
+    "author": "Sophie Berkhout",
+    "maintainer": "Sophie Berkhout <s.w.berkhout@gmail.com>",
+    "license": "GPL (>= 2)"
+  },
+
+  "requiredPackages": [
+  	{ "package": "metaBMA" }
+  ],
+
+  "menu":
+      [
+        {
+          "title":    "Meta Analyses",
+          "icon":     "forest.svg"
+        },
+        {
+          "title":    "Bayesian Meta Analysis",
+          "qml":      "bayesianMetaAnalysis.qml",
+          "function": "bayesianMetaAnalysis"
+        }
+      ]

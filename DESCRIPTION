@@ -1,0 +1,11 @@
+Package: DevelopmentModule
+Type: Package
+Title: Bayesian Meta Analysis Module for JASP
+Version: 0.0.0
+Date: 2019-06-05
+Author: Sophie Berkhout
+Website: Unknown
+Maintainer: Sophie Berkhout <s.w.berkhout@gmail.com>
+Description: Meta Analysis with Bayesian Model Averaging and Random Order Constraints.
+License: GPL (>= 2)
+Imports: metaBMA
