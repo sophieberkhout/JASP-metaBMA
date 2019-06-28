@@ -302,21 +302,19 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                           "lowerTruncT", "upperTruncT"))
     
     jaspResults[["priorPlot"]] <- priorPlot
+   # priorPlot$plotObject <- ggplot2::ggplot(<code>)
     
-    .fillPriorPlotES(priorPlot, dataset, options)
-
-    return()
-    
+   # .fillPriorPlotES(priorPlot, dataset, options)
+   # return()
   }
   
   .fillPriorPlotES <- function(priorPlot, dataset, options){
     m <- jaspResults[["bmaResults"]]$object
     x <- seq(0,1,.001)
     df <- data.frame(x = m$prior_d$fixed(x), type = "prior")
-    plot <- ggplot2::ggplot2::ggplot(df, ggplot2::aes(x)) +
-            ggplot2::stat_function(fun = m$prior_d$fixed, n = 1000, size = 1)
+    # plot <- ggplot2::ggplot2::ggplot(df, ggplot2::aes(x)) +
+    #         ggplot2::stat_function(fun = m$prior_d$fixed, n = 1000, size = 1)
     # plot <- themeJasp(plot)
-    
     priorPlot$plotObject <- plot
     
     return()
