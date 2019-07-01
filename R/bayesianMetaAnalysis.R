@@ -258,9 +258,6 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
     m <- jaspResults[["bmaResults"]]$object
 
-    postProb <- m$posterior_models
-    priorProb <- m$prior_models
-
     ready <- options[["effectSize"]] != "" && options[["standardError"]] != ""
 
     if(!ready){
@@ -275,12 +272,18 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
     if(options$modelSpecification == "BMA"){
       model <- c("Fixed H\u2080", "Fixed H\u2081", "Random H\u2080", "Random H\u2081")
+      postProb <- m$posterior_models
+      priorProb <- m$prior_models
     }
     if(options$modelSpecification == "FE"){
       model <- c("Fixed H\u2080", "Fixed H\u2081")
+      postProb <- m$posterior_models[c("fixed_H0", "fixed_H1")]
+      priorProb <- m$prior_models[1:2]
     }
     if(options$modelSpecification == "RE"){
       model <- c("Random H\u2080", "Random H\u2081")
+      postProb <- m$posterior_models[c("random_H0", "random_H1")]
+      priorProb <- m$prior_models[3:4]
     }
 
 
@@ -294,27 +297,30 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     priorPlot <- createJaspPlot(plot = NULL, title = "Prior")
     
     priorPlot$dependOn(c("priorES", "cauchy", "normal", "t",
-                                          "informativeCauchyLocation", "informativeCauchyScale",
-                                          "lowerTruncCauchy", "upperTruncCauchy",
-                                          "informativeNormalMean", "informativeNormalStd",
-                                          "lowerTruncNormal", "upperTruncNormal",
-                                          "informativeTLocation", "informativeTScale", "informativeTDf",
-                                          "lowerTruncT", "upperTruncT"))
+                          "informativeCauchyLocation", "informativeCauchyScale",
+                          "lowerTruncCauchy", "upperTruncCauchy",
+                          "informativeNormalMean", "informativeNormalStd",
+                          "lowerTruncNormal", "upperTruncNormal",
+                          "informativeTLocation", "informativeTScale", "informativeTDf",
+                          "lowerTruncT", "upperTruncT"))
     
     jaspResults[["priorPlot"]] <- priorPlot
    # priorPlot$plotObject <- ggplot2::ggplot(<code>)
     
-   # .fillPriorPlotES(priorPlot, dataset, options)
+    .fillPriorPlotES(priorPlot, jaspResults, dataset, options)
    # return()
   }
   
-  .fillPriorPlotES <- function(priorPlot, dataset, options){
+  .fillPriorPlotES <- function(priorPlot, jaspResults, dataset, options){
     m <- jaspResults[["bmaResults"]]$object
-    x <- seq(0,1,.001)
-    df <- data.frame(x = m$prior_d$fixed(x), type = "prior")
-    # plot <- ggplot2::ggplot2::ggplot(df, ggplot2::aes(x)) +
-    #         ggplot2::stat_function(fun = m$prior_d$fixed, n = 1000, size = 1)
-    # plot <- themeJasp(plot)
+    x <- seq(0, 1, .001)
+    df <- data.frame(x = x)
+    plot <- ggplot2::ggplot(df, ggplot2::aes(x)) +
+            ggplot2::stat_function(fun = m$prior_d$fixed, n = 1000, size = 1) +
+            ggplot2::labs(x = expression(eta), y = "Density")
+    # df2 <- data.frame(x = x, y = x)
+    # plot <- ggplot2::ggplot(df2, ggplot2::aes(x = x, y = y)) + ggplot2::geom_point()
+    plot <- themeJasp(plot)
     priorPlot$plotObject <- plot
     
     return()
