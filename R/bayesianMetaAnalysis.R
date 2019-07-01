@@ -18,7 +18,7 @@
 # Main function ----
 
 BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
-    
+  
     dataset <- .readData(jaspResults, options)
     
     .bmaMainTable(jaspResults, dataset, options)
@@ -27,7 +27,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
     .bmaPostModelTable(jaspResults, dataset, options)
     
-    .priorPlotES(jaspResults, dataset, options)
+    if(options$plotPrior){
+      .priorPlot(jaspResults, dataset, options)
+    }
+    
+    .priorAndPosteriorPlot(jaspResults, dataset, options)
+    
   }
   
   .readData <- function(jaspResults, options){
@@ -54,56 +59,57 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                           "informativeNormalMean", "informativeNormalStd",
                           "lowerTruncNormal", "upperTruncNormal",
                           "informativeTLocation", "informativeTScale", "informativeTDf",
-                          "lowerTruncT", "upperTruncT"))
+                          "lowerTruncT", "upperTruncT",
+                          "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
+                          "halfT", "informativehalfTScale", "informativehalfTDf"))
     
     varES <- dataset[, .v(options[["effectSize"]])]
     varSE <- dataset[, .v(options[["standardError"]])]
     
   
     # effect size prior
-    lower <- -Inf
-    upper <- Inf
+    lowerES <- -Inf
+    upperES <- Inf
     
     if(options$priorES == "cauchy"){
-      family <- "t"
-      param <- c(options$informativeCauchyLocation, options$informativeCauchyScale, 1)
+      familyES <- "t"
+      paramES <- c(options$informativeCauchyLocation, options$informativeCauchyScale, 1)
       if(options$truncCauchy){
-        lower <- options$lowerTruncCauchy
-        upper <- options$upperTruncCauchy
+        lowerES <- options$lowerTruncCauchy
+        upperES <- options$upperTruncCauchy
       }
     }
     if(options$priorES == "normal"){
-      family <- "norm"
-      param <- c(options$informativeNormalMean, options$informativeNormalStd)
+      familyES <- "norm"
+      paramES <- c(options$informativeNormalMean, options$informativeNormalStd)
       if(options$truncCauchy){
-        lower <- options$lowerTruncNormal
-        upper <- options$upperTruncNormal
+        lowerES <- options$lowerTruncNormal
+        upperES <- options$upperTruncNormal
       }
     }
     if(options$priorES == "t"){
-      family <- "t"
-      param <- c(options$informativeTLocation, options$informativeTScale, options$informativeTDf)
+      familyES <- "t"
+      paramES <- c(options$informativeTLocation, options$informativeTScale, options$informativeTDf)
       if(options$truncCauchy){
-        lower <- options$lowerTruncT
-        upper <- options$upperTruncT
+        lowerES <- options$lowerTruncT
+        upperES <- options$upperTruncT
       }
     }
     
     # heterogeneity prior
     if(options$priorSE == "inverseGamma"){
-      family <- "invgamma"
-      param <- c(options$inverseGammaShape, options$inverseGammaScale)
-      lower <- -Inf
+      familySE <- "invgamma"
+      paramSE <- c(options$inverseGammaShape, options$inverseGammaScale)
+      lowerSE <- -Inf
     }
     if(options$priorSE == "halfT"){
-      family <- "t"
-      param <- c(0, options$informativehalfTScale, options$informativehalfTDf)
-      lower <- 0
+      familySE <- "t"
+      paramSE <- c(0, options$informativehalfTScale, options$informativehalfTDf)
+      lowerSE <- 0
     }
     
-   
-    d <- metaBMA::prior(family, param, lower, upper)
-    tau <- metaBMA::prior(family, param, lower)
+    d <- metaBMA::prior(familyES, paramES, lowerES, upperES)
+    tau <- metaBMA::prior(familySE, paramSE, lowerSE)
     
     modelPrior <- c(options[["priorH0FE"]], options[["priorH1FE"]], 
                 options[["priorH0RE"]], options[["priorH1RE"]])
@@ -129,7 +135,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                         "informativeNormalMean", "informativeNormalStd",
                         "lowerTruncNormal", "upperTruncNormal",
                         "informativeTLocation", "informativeTScale", "informativeTDf",
-                        "lowerTruncT", "upperTruncT"))
+                        "lowerTruncT", "upperTruncT",
+                        "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
+                        "halfT", "informativehalfTScale", "informativehalfTDf"))
     
     bmaTable$addColumnInfo(name = "model", title = "", type = "string")
     bmaTable$addColumnInfo(name = "ES",   title = "Estimate",   type = "number", format = "dp:3")
@@ -197,7 +205,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                        "informativeNormalMean", "informativeNormalStd",
                        "lowerTruncNormal", "upperTruncNormal",
                        "informativeTLocation", "informativeTScale", "informativeTDf",
-                       "lowerTruncT", "upperTruncT"))
+                       "lowerTruncT", "upperTruncT",
+                       "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
+                       "halfT", "informativehalfTScale", "informativehalfTDf"))
     
     esTable$addColumnInfo(name = "study", title = "", type = "string")
     esTable$addColumnInfo(name = "observedES",   title = "Observed",   type = "number", format = "dp:3",
@@ -250,7 +260,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                        "informativeNormalMean", "informativeNormalStd",
                        "lowerTruncNormal", "upperTruncNormal",
                        "informativeTLocation", "informativeTScale", "informativeTDf",
-                       "lowerTruncT", "upperTruncT"))
+                       "lowerTruncT", "upperTruncT",
+                       "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
+                       "halfT", "informativehalfTScale", "informativehalfTDf"))
 
     postTable$addColumnInfo(name = "model", title = "", type = "string")
     postTable$addColumnInfo(name = "priorProb",   title = "Prior",   type = "number", format = "dp:3")
@@ -293,10 +305,16 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 
   }
   
-  .priorPlotES <- function(jaspResults, dataset, options) {
-    priorPlot <- createJaspPlot(plot = NULL, title = "Prior")
+  .priorPlot <- function(jaspResults, dataset, options) {
+    priorContainer <- createJaspContainer(title = "Priors")
+    priorContainer$dependOn(c("plotPrior"))
+    jaspResults[["priorContainer"]] <- priorContainer
     
-    priorPlot$dependOn(c("priorES", "cauchy", "normal", "t",
+    priorPlotES <- createJaspPlot(plot = NULL, title = "Effect size")
+    priorPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity")
+    
+    
+    priorPlotES$dependOn(c("priorES", "cauchy", "normal", "t",
                           "informativeCauchyLocation", "informativeCauchyScale",
                           "lowerTruncCauchy", "upperTruncCauchy",
                           "informativeNormalMean", "informativeNormalStd",
@@ -304,16 +322,35 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                           "informativeTLocation", "informativeTScale", "informativeTDf",
                           "lowerTruncT", "upperTruncT"))
     
-    jaspResults[["priorPlot"]] <- priorPlot
+    priorPlotSE$dependOn(c("priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
+                           "halfT", "informativehalfTScale", "informativehalfTDf"))
+    
+   # jaspResults[["priorPlot"]] <- priorPlot
    # priorPlot$plotObject <- ggplot2::ggplot(<code>)
     
-    .fillPriorPlotES(priorPlot, jaspResults, dataset, options)
+    .fillPriorPlotES(priorPlotES, jaspResults, dataset, options)
+    .fillPriorPlotSE(priorPlotSE, jaspResults, dataset, options)
+    
+    
+    priorContainer[["ES"]] <- priorPlotES
+    priorContainer[["SE"]] <- priorPlotSE
+    
    # return()
   }
   
-  .fillPriorPlotES <- function(priorPlot, jaspResults, dataset, options){
+  .fillPriorPlotES <- function(priorPlotES, jaspResults, dataset, options){
     m <- jaspResults[["bmaResults"]]$object
-    x <- seq(0, 1, .001)
+    if(options$priorES == "cauchy"){
+      mean <- options$informativeCauchyLocation
+    } else if(options$priorES == "normal"){
+      mean <- options$informativeNormalMean
+    } else {
+      mean <- options$informativeTLocation
+    }
+    
+    xlimLeft <- mean - 3
+    xlimRight <- mean + 3
+    x <- seq(xlimLeft, xlimRight, .001)
     df <- data.frame(x = x)
     plot <- ggplot2::ggplot(df, ggplot2::aes(x)) +
             ggplot2::stat_function(fun = m$prior_d$fixed, n = 1000, size = 1) +
@@ -321,11 +358,104 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     # df2 <- data.frame(x = x, y = x)
     # plot <- ggplot2::ggplot(df2, ggplot2::aes(x = x, y = y)) + ggplot2::geom_point()
     plot <- themeJasp(plot)
-    priorPlot$plotObject <- plot
+    priorPlotES$plotObject <- plot
     
     return()
   }
   
+  .fillPriorPlotSE <- function(priorPlotSE, jaspResults, dataset, options){
+    m <- jaspResults[["bmaResults"]]$object
+    x <- seq(0, 3, .001)
+    df <- data.frame(x = x)
+    plot <- ggplot2::ggplot(df, ggplot2::aes(x)) +
+      ggplot2::stat_function(fun = m$meta$random$prior_tau, n = 1000, size = 1) +
+      ggplot2::labs(x = expression(tau), y = "Density")
+    # df2 <- data.frame(x = x, y = x)
+    # plot <- ggplot2::ggplot(df2, ggplot2::aes(x = x, y = y)) + ggplot2::geom_point()
+    plot <- themeJasp(plot)
+    priorPlotSE$plotObject <- plot
+    
+    return()
+  }
+  
+  .priorAndPosteriorPlot <- function(jaspResults, dataset, options) {
+    postContainer <- createJaspContainer(title = "Posteriors")
+    postContainer$dependOn(c("plotPosterior"))
+    jaspResults[["postContainer"]] <- postContainer
+    
+    postPlotES <- createJaspPlot(plot = NULL, title = "Effect size")
+    postPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity")
+    
+    
+    postPlotES$dependOn(c("priorES", "cauchy", "normal", "t",
+                           "informativeCauchyLocation", "informativeCauchyScale",
+                           "lowerTruncCauchy", "upperTruncCauchy",
+                           "informativeNormalMean", "informativeNormalStd",
+                           "lowerTruncNormal", "upperTruncNormal",
+                           "informativeTLocation", "informativeTScale", "informativeTDf",
+                           "lowerTruncT", "upperTruncT"))
+    
+    postPlotSE$dependOn(c("priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
+                           "halfT", "informativehalfTScale", "informativehalfTDf"))
+    
+    .fillPostPlot(postPlotES, jaspResults, dataset, options, type = "ES")
+    .fillPostPlot(postPlotSE, jaspResults, dataset, options, type = "SE")
+    
+    
+    postContainer[["ES"]] <- postPlotES
+    postContainer[["SE"]] <- postPlotSE
+    
+    # return()
+  }
+  
+  .fillPostPlot <- function(postPlot, jaspResults, dataset, options, type){
+    m <- jaspResults[["bmaResults"]]$object
+
+    df <- data.frame(x = c(-1, 1), l = c("Prior", "Posterior"))
+    
+    if(type == "ES"){
+      mPrior <- m$prior_d$fixed
+      mPost <- m$posterior_d
+      int <- c(m$estimates["averaged", "2.5%"], m$estimates["averaged", "97.5%"])
+      e <- m$estimates["averaged", "mean"]
+      xlab <- expression(eta)
+    } else if(type == "SE"){
+      mPrior <- m$meta$random$prior_tau
+      mPost <- m$meta$random$posterior_tau
+      int <- c(m$meta$random$estimates["tau", "2.5%"], m$meta$random$estimates["tau", "97.5%"])
+      e <- m$meta$random$estimates["tau", "mean"]
+      xlab <- expression(tau)
+    }
+    
+    plot <- ggplot2::ggplot(df, ggplot2::aes(x)) +
+      ggplot2::stat_function(fun = mPost, n = 1000, size = 1, ggplot2::aes(linetype = "Posterior")) +
+      ggplot2::stat_function(fun = mPrior, n = 1000, size = 1, ggplot2::aes(linetype = "Prior")) +
+      ggplot2::scale_linetype_manual(values = c("solid", "dotted")) +
+      ggplot2::stat_function(fun = mPost, 
+                    xlim = int,
+                    geom = "area", alpha = 0.2, show.legend = F) +
+      ggplot2::geom_segment(ggplot2::aes(x = e, xend = e, y = 0, yend = mPost(e)-.01), size = 0.5) +
+      # ggplot2::geom_vline(ggplot2::aes(xintercept = mode(x))) + 
+      # theme_classic() +
+      # ggplot2::theme(legend.position = "top",
+      #       legend.spacing.x = ggplot2::unit(0.3, "cm"),
+      #       legend.title = ggplot2::element_blank()) +
+      ggplot2::labs(x = xlab, y = "Density")
+    
+    mPostFixed <- m$meta$fixed$posterior_d
+    mPostRandom <- m$meta$random$posterior_d
+    
+    plot <- plot + ggplot2::stat_function(fun = mPostFixed, n = 1000, linetype = "dashed", size = 1, ggplot2::aes(colour = "Fixed")) +
+      ggplot2::stat_function(fun = mPostRandom, n = 1000, linetype = "dashed", size = 1, ggplot2::aes(colour = "Random"))
+    
+    plot <- themeJasp(plot)
+    
+    postPlot$plotObject <- plot
+    
+    return()
+  }
+  
+
   
   
   
