@@ -569,16 +569,21 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       
     plot <-  ggplot2::ggplot(df,
                              ggplot2::aes(x = effectSize,
-                                          y = reorder(studyLabels, -effectSize)))+
+                                          y = as.numeric(reorder(studyLabels, -effectSize))))+
       # add dotted vertical line at x = 0
     ggplot2::geom_vline(xintercept = 0, linetype = "dotted")+
       
       # add observed points and text
       ggplot2::geom_point(shape = 15, size = weight_scaled) +
       ggplot2::geom_errorbarh(ggplot2::aes(xmin = lower, xmax = upper), height = .2) +
-      ggplot2::annotate("text", label = text_observed,
-               x = shift_right, y = reorder(df$studyLabels, -df$effectSize),
-               hjust = "right", size = 6) +
+      # ggplot2::annotate("text", label = text_observed,
+      #          x = shift_right, y = reorder(df$studyLabels, -df$effectSize),
+      #          hjust = "right", size = 6) +
+      ggplot2::scale_y_continuous(breaks = 1:length(studyLabels),
+                                  labels = studyLabels,
+                                  sec.axis = ggplot2::sec_axis(~ .,
+                                                               breaks = 1:length(text_observed),
+                                                               labels = text_observed)) +
       ggplot2::geom_segment(x = -99, xend = 99, y = 0, yend = 0) +
       # ggplot2::theme(axis.title.y = ggplot2::element_blank(),
       #       axis.line.y = ggplot2::element_blank(),
@@ -607,7 +612,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       ggplot2::theme(axis.title.y = ggplot2::element_blank(),
             axis.line.y = ggplot2::element_blank(),
             axis.ticks.y = ggplot2::element_blank(),
-            plot.margin = ggplot2::unit(c(1,10,1,1), "lines"), # margin on the right for text
+            # plot.margin = ggplot2::unit(c(1,10,1,1), "lines"), # margin on the right for text
             # panel.grid.major = ggplot2::element_blank(),
             # panel.grid.minor = ggplot2::element_blank(),
             # axis.ticks.x = ggplot2::element_line(size = .3),
@@ -619,7 +624,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     plot <- plot +
       ggplot2::geom_polygon(data = d, ggplot2::aes(x = x, y = y)) +
       ggplot2::annotate("text", label = text_overall,
-               x = shift_right , y = -0.5, hjust = "right", size = 6)+
+               x = Inf, y = -0.5, hjust = 0, size = 6)+
       ggplot2::geom_text(ggplot2::aes(x = -Inf, y = -0.5, label = "FE model"),
                 hjust = 1, size = 6)
     
