@@ -19,52 +19,71 @@
 
 BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
-    dataset <- .readData(jaspResults, options)
+  ready <- options[["effectSize"]] != "" && options[["standardError"]] != "" 
+  
+  dependencies <- c("effectSize", "standardError", "studyLabels", "modelSpecification",
+                    "priorH0FE", "priorH1FE", "priorH0RE", "priorH1RE",
+                    "priorES", "cauchy", "normal", "t",
+                    "informativeCauchyLocation", "informativeCauchyScale",
+                    "lowerTruncCauchy", "upperTruncCauchy",
+                    "informativeNormalMean", "informativeNormalStd",
+                    "lowerTruncNormal", "upperTruncNormal",
+                    "informativeTLocation", "informativeTScale", "informativeTDf",
+                    "lowerTruncT", "upperTruncT",
+                    "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
+                    "halfT", "informativehalfTScale", "informativehalfTDf",
+                    "BFComputation", "integration", "bridgeSampling", "iterBridge",
+                    "iterMCMC", "chainsMCMC")
+  
+  dataset <- .readData(jaspResults, options)
     
-    .bmaMainTable(jaspResults, dataset, options)
+  .bmaMainTable(jaspResults, dataset, options, ready, dependencies)
     
-    .bmaEffectSizeTable(jaspResults, dataset, options)
+  .bmaEffectSizeTable(jaspResults, dataset, options, ready, dependencies)
     
-    .bmaPostModelTable(jaspResults, dataset, options)
+  .bmaPostModelTable(jaspResults, dataset, options, ready, dependencies)
     
-    if(options$plotPrior){
-      .priorPlot(jaspResults, dataset, options)
-    }
-    
-    .priorAndPosteriorPlot(jaspResults, dataset, options)
-    
+  if(options$plotPrior){
+    .priorPlot(jaspResults, dataset, options, ready)
   }
+  
+  if(options$plotPosterior){  
+    .priorAndPosteriorPlot(jaspResults, dataset, options, ready)
+  }
+  
+  .forestPlot(jaspResults, dataset, options, ready, dependencies)
+  
+}
   
   .readData <- function(jaspResults, options){
     varES <- options[["effectSize"]]
     varSE <- options[["standardError"]]
+    #varCI <- options[["confidenceInterval"]]
     study <- options[["studyLabels"]]
     if(varES == "") varES <- NULL
     if(varSE == "") varSE <- NULL
+    #if(varCI == "") varCI <- NULL
     if(study == "") study <- NULL
     variables.to.read <- c(varES, varSE, study)
     dataset <- .readDataSetToEnd(columns.as.numeric = variables.to.read)
     return(dataset)
   }
   
-  .bmaResults <- function(jaspResults, dataset, options) {
+  .bmaResults <- function(jaspResults, dataset, options, dependencies) {
     
     bmaResults <- createJaspState()
     jaspResults[["bmaResults"]] <- bmaResults
-    bmaResults$dependOn(c("effectSize", "standardError", "studyLabels", "modelSpecification",
-                          "priorH0FE", "priorH1FE", "priorH0RE", "priorH1RE",
-                          "priorES", "cauchy", "normal", "t",
-                          "informativeCauchyLocation", "informativeCauchyScale",
-                          "lowerTruncCauchy", "upperTruncCauchy",
-                          "informativeNormalMean", "informativeNormalStd",
-                          "lowerTruncNormal", "upperTruncNormal",
-                          "informativeTLocation", "informativeTScale", "informativeTDf",
-                          "lowerTruncT", "upperTruncT",
-                          "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
-                          "halfT", "informativehalfTScale", "informativehalfTDf"))
+    bmaResults$dependOn(dependencies)
     
     varES <- dataset[, .v(options[["effectSize"]])]
     varSE <- dataset[, .v(options[["standardError"]])]
+    
+    # if(options[["standardError"]] != ""){
+    #   varSE <- dataset[, .v(options[["standardError"]])]
+    # } else if(options[["confidenceInterval"]] != ""){
+    #   confidenceInterval <- dataset[, .v(options[["confidenceInterval"]])] 
+    #   varSE <- (confidenceInterval)/3.92
+    # }
     
   
     # effect size prior
@@ -108,13 +127,33 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       lowerSE <- 0
     }
     
+    # estimation settings
+    iter <- options$iterMCMC
+    chains <- options$chainsMCMC
+    
+    # bayes factor computation
+    if(options$BFComputation == "integration"){
+      logml <- "integrate"
+      logml_iter <- 5000
+    } else if(options$BFComputation == "bridgeSampling"){
+      logml <- "stan"
+      logml_iter <- options$iterBridge
+    }
+    
     d <- metaBMA::prior(familyES, paramES, lowerES, upperES)
     tau <- metaBMA::prior(familySE, paramSE, lowerSE)
     
     modelPrior <- c(options[["priorH0FE"]], options[["priorH1FE"]], 
                 options[["priorH0RE"]], options[["priorH1RE"]])
       
-    results <- metaBMA::meta_bma(varES, varSE, prior = modelPrior, d = d, tau = tau)
+    results <- metaBMA::meta_bma(varES, varSE, 
+                                 prior = modelPrior, 
+                                 d = d, 
+                                 tau = tau,
+                                 logml = logml,
+                                 logml_iter = logml_iter,
+                                 iter = iter,
+                                 chains = chains)
 
     bmaResults$object <- results
     
@@ -122,22 +161,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   }
   
   
-  .bmaMainTable <- function(jaspResults, dataset, options) {
+  .bmaMainTable <- function(jaspResults, dataset, options, ready, dependencies) {
     if (!is.null(jaspResults[["bmaTable"]])) return()
     
     bmaTable <- createJaspTable(title = "Bayesian Meta Analysis")
     jaspResults[["bmaTable"]] <- bmaTable
-    bmaTable$dependOn(c("effectSize", "standardError", "confidenceInterval",
-                        "modelSpecification", "priorH0FE", "priorH1FE", "priorH0RE", "priorH1RE",
-                        "priorES", "cauchy", "normal", "t",
-                        "informativeCauchyLocation", "informativeCauchyScale",
-                        "lowerTruncCauchy", "upperTruncCauchy",
-                        "informativeNormalMean", "informativeNormalStd",
-                        "lowerTruncNormal", "upperTruncNormal",
-                        "informativeTLocation", "informativeTScale", "informativeTDf",
-                        "lowerTruncT", "upperTruncT",
-                        "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
-                        "halfT", "informativehalfTScale", "informativehalfTDf"))
+    bmaTable$dependOn(dependencies)
     
     bmaTable$addColumnInfo(name = "model", title = "", type = "string")
     bmaTable$addColumnInfo(name = "ES",   title = "Estimate",   type = "number", format = "dp:3")
@@ -148,15 +177,13 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     bmaTable$addColumnInfo(name = "ub",      title = "Upper",      type = "number", format = "dp:3",
                            overtitle = "95% HDI")
     
-    ready <- options[["effectSize"]] != "" && options[["standardError"]] != ""
-    
     if(!ready){
       return()
     }
     
     
     if (is.null(jaspResults[["bmaResults"]]))
-      .bmaResults(jaspResults, dataset, options)
+      .bmaResults(jaspResults, dataset, options, dependencies)
     
     m <- jaspResults[["bmaResults"]]$object
     
@@ -192,29 +219,17 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
   }
   
-  .bmaEffectSizeTable <- function(jaspResults, dataset, options) {
+  .bmaEffectSizeTable <- function(jaspResults, dataset, options, ready, dependencies) {
     if (!is.null(jaspResults[["esTable"]])) return()
     
     esTable <- createJaspTable(title = "Effect Sizes per Study")
     jaspResults[["esTable"]] <- esTable
-    esTable$dependOn(c("effectSize", "standardError", "confidenceInterval",
-                        "modelSpecification", "studyLabels",
-                       "priorES", "cauchy", "normal", "t",
-                       "informativeCauchyLocation", "informativeCauchyScale",
-                       "lowerTruncCauchy", "upperTruncCauchy",
-                       "informativeNormalMean", "informativeNormalStd",
-                       "lowerTruncNormal", "upperTruncNormal",
-                       "informativeTLocation", "informativeTScale", "informativeTDf",
-                       "lowerTruncT", "upperTruncT",
-                       "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
-                       "halfT", "informativehalfTScale", "informativehalfTDf"))
+    esTable$dependOn(dependencies)
     
     esTable$addColumnInfo(name = "study", title = "", type = "string")
     esTable$addColumnInfo(name = "observedES",   title = "Observed",   type = "number", format = "dp:3",
                            overtitle = "Effect Sizes")
     
-    ready <- options[["effectSize"]] != ""
-
     if(!ready){
       return()
     }
@@ -228,15 +243,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                             overtitle = "Effect Sizes")
       estimatedES <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "mean"]
     }
-    
-    
-    
-    
+
 
     if(options[["studyLabels"]] != ""){
       studyLabels <- dataset[, .v(options[["studyLabels"]])]
     } else {
-      studyLabels <- 1:length(varES)
+      studyLabels <- paste("Study", 1:length(varES))
     }
     
     esTable$showSpecifiedColumnsOnly <- TRUE
@@ -246,23 +258,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
   }
   
-  .bmaPostModelTable <- function(jaspResults, dataset, options) {
+  .bmaPostModelTable <- function(jaspResults, dataset, options, ready, dependencies) {
     if (!is.null(jaspResults[["postTable"]])) return()
 
     postTable <- createJaspTable(title = "Model Probabilities")
     jaspResults[["postTable"]] <- postTable
-    postTable$dependOn(c("effectSize", "standardError", "confidenceInterval",
-                       "modelSpecification",
-                       "priorH0FE", "priorH1FE", "priorH0RE", "priorH1RE",
-                       "priorES", "cauchy", "normal", "t",
-                       "informativeCauchyLocation", "informativeCauchyScale",
-                       "lowerTruncCauchy", "upperTruncCauchy",
-                       "informativeNormalMean", "informativeNormalStd",
-                       "lowerTruncNormal", "upperTruncNormal",
-                       "informativeTLocation", "informativeTScale", "informativeTDf",
-                       "lowerTruncT", "upperTruncT",
-                       "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
-                       "halfT", "informativehalfTScale", "informativehalfTDf"))
+    postTable$dependOn(dependencies)
 
     postTable$addColumnInfo(name = "model", title = "", type = "string")
     postTable$addColumnInfo(name = "priorProb",   title = "Prior",   type = "number", format = "dp:3")
@@ -270,14 +271,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
     m <- jaspResults[["bmaResults"]]$object
 
-    ready <- options[["effectSize"]] != "" && options[["standardError"]] != ""
-
     if(!ready){
       return()
     }
 
     if (is.null(jaspResults[["bmaResults"]]))
-      .bmaResults(jaspResults, dataset, options)
+      .bmaResults(jaspResults, dataset, options, dependencies)
 
 
     postTable$showSpecifiedColumnsOnly <- TRUE
@@ -305,14 +304,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 
   }
   
-  .priorPlot <- function(jaspResults, dataset, options) {
-    priorContainer <- createJaspContainer(title = "Priors")
+  .priorPlot <- function(jaspResults, dataset, options, ready) {
+    priorContainer <- createJaspContainer(title = "Prior")
     priorContainer$dependOn(c("plotPrior"))
     jaspResults[["priorContainer"]] <- priorContainer
     
     priorPlotES <- createJaspPlot(plot = NULL, title = "Effect size")
-    priorPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity")
-    
     
     priorPlotES$dependOn(c("priorES", "cauchy", "normal", "t",
                           "informativeCauchyLocation", "informativeCauchyScale",
@@ -322,18 +319,28 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                           "informativeTLocation", "informativeTScale", "informativeTDf",
                           "lowerTruncT", "upperTruncT"))
     
-    priorPlotSE$dependOn(c("priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
-                           "halfT", "informativehalfTScale", "informativehalfTDf"))
     
    # jaspResults[["priorPlot"]] <- priorPlot
    # priorPlot$plotObject <- ggplot2::ggplot(<code>)
     
-    .fillPriorPlotES(priorPlotES, jaspResults, dataset, options)
-    .fillPriorPlotSE(priorPlotSE, jaspResults, dataset, options)
+    if(!ready){
+      return()
+    }
     
+    .fillPriorPlotES(priorPlotES, jaspResults, dataset, options)
     
     priorContainer[["ES"]] <- priorPlotES
-    priorContainer[["SE"]] <- priorPlotSE
+
+    if(options$modelSpecification == "BMA" || options$modelSpecification == "RE"){
+      priorPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity")
+      priorPlotSE$dependOn(c("priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
+                             "halfT", "informativehalfTScale", "informativehalfTDf"))
+      .fillPriorPlotSE(priorPlotSE, jaspResults, dataset, options)
+      priorContainer[["SE"]] <- priorPlotSE
+    }
+    
+    
+    
     
    # return()
   }
@@ -354,7 +361,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     df <- data.frame(x = x)
     plot <- ggplot2::ggplot(df, ggplot2::aes(x)) +
             ggplot2::stat_function(fun = m$prior_d$fixed, n = 1000, size = 1) +
-            ggplot2::labs(x = expression(eta), y = "Density")
+            ggplot2::labs(x = expression(eta), y = "Density") +
+            ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
     # df2 <- data.frame(x = x, y = x)
     # plot <- ggplot2::ggplot(df2, ggplot2::aes(x = x, y = y)) + ggplot2::geom_point()
     plot <- themeJasp(plot)
@@ -369,7 +377,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     df <- data.frame(x = x)
     plot <- ggplot2::ggplot(df, ggplot2::aes(x)) +
       ggplot2::stat_function(fun = m$meta$random$prior_tau, n = 1000, size = 1) +
-      ggplot2::labs(x = expression(tau), y = "Density")
+      ggplot2::labs(x = expression(tau), y = "Density") +
+      ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
     # df2 <- data.frame(x = x, y = x)
     # plot <- ggplot2::ggplot(df2, ggplot2::aes(x = x, y = y)) + ggplot2::geom_point()
     plot <- themeJasp(plot)
@@ -378,13 +387,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     return()
   }
   
-  .priorAndPosteriorPlot <- function(jaspResults, dataset, options) {
-    postContainer <- createJaspContainer(title = "Posteriors")
+  .priorAndPosteriorPlot <- function(jaspResults, dataset, options, ready) {
+    postContainer <- createJaspContainer(title = "Prior and Posteriors")
     postContainer$dependOn(c("plotPosterior"))
     jaspResults[["postContainer"]] <- postContainer
     
     postPlotES <- createJaspPlot(plot = NULL, title = "Effect size")
-    postPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity")
     
     
     postPlotES$dependOn(c("priorES", "cauchy", "normal", "t",
@@ -395,15 +403,23 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                            "informativeTLocation", "informativeTScale", "informativeTDf",
                            "lowerTruncT", "upperTruncT"))
     
-    postPlotSE$dependOn(c("priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
-                           "halfT", "informativehalfTScale", "informativehalfTDf"))
+    
+    if(!ready){
+      return()
+    }
     
     .fillPostPlot(postPlotES, jaspResults, dataset, options, type = "ES")
-    .fillPostPlot(postPlotSE, jaspResults, dataset, options, type = "SE")
-    
     
     postContainer[["ES"]] <- postPlotES
-    postContainer[["SE"]] <- postPlotSE
+
+    if(options$modelSpecification == "BMA" || options$modelSpecification == "RE"){
+      postPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity")
+      postPlotSE$dependOn(c("priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
+                            "halfT", "informativehalfTScale", "informativehalfTDf"))
+      postContainer[["SE"]] <- postPlotSE
+      .fillPostPlot(postPlotSE, jaspResults, dataset, options, type = "SE")
+   }
+    
     
     # return()
   }
@@ -435,27 +451,158 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                     xlim = int,
                     geom = "area", alpha = 0.2, show.legend = F) +
       ggplot2::geom_segment(ggplot2::aes(x = e, xend = e, y = 0, yend = mPost(e)-.01), size = 0.5) +
+      ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
       # ggplot2::geom_vline(ggplot2::aes(xintercept = mode(x))) + 
       # theme_classic() +
       # ggplot2::theme(legend.position = "top",
       #       legend.spacing.x = ggplot2::unit(0.3, "cm"),
       #       legend.title = ggplot2::element_blank()) +
-      ggplot2::labs(x = xlab, y = "Density")
+      ggplot2::labs(x = xlab, y = "Density") +
+      ggplot2::guides(colour = ggplot2::guide_legend(ncol=1,nrow=2,byrow=TRUE)) +
+      ggplot2::guides(linetype = ggplot2::guide_legend(ncol=1,nrow=2,byrow=TRUE))
+    
     
     mPostFixed <- m$meta$fixed$posterior_d
     mPostRandom <- m$meta$random$posterior_d
     
-    plot <- plot + ggplot2::stat_function(fun = mPostFixed, n = 1000, linetype = "dashed", size = 1, ggplot2::aes(colour = "Fixed")) +
-      ggplot2::stat_function(fun = mPostRandom, n = 1000, linetype = "dashed", size = 1, ggplot2::aes(colour = "Random"))
+    plot <- plot + ggplot2::stat_function(fun = mPostFixed, n = 1000, size = 1, ggplot2::aes(colour = "Fixed")) +
+      ggplot2::stat_function(fun = mPostRandom, n = 1000, size = 1, ggplot2::aes(colour = "Random"))
     
-    plot <- themeJasp(plot)
+    plot <- themeJasp(plot, legend.position = "bottom", legend.title = "none")
     
     postPlot$plotObject <- plot
     
     return()
   }
   
-
+  .forestPlot <- function(jaspResults, dataset, options, ready, dependencies) {
+    forestContainer <- createJaspContainer(title = "Forest Plot")
+    forestContainer$dependOn(c("plotForestObserved"))
+    jaspResults[["forestContainer"]] <- forestContainer
+    
+    forestPlot <- createJaspPlot(plot = NULL, title = "Forest Plot")
+    
+    
+    forestPlot$dependOn(dependencies)
+    
+    
+    if(!ready){
+      return()
+    }
+    
+    .fillForestPlot(forestPlot, jaspResults, dataset, options)
+    
+    forestContainer[["forestPlot"]] <- forestPlot
+    
+  }
+  
+  .fillForestPlot <- function(forestPlot, jaspResults, dataset, options){
+    m <- jaspResults[["bmaResults"]]$object
+    
+    varSE <- dataset[, .v(options[["standardError"]])]
+    if(options[["studyLabels"]] != ""){
+      studyLabels <- dataset[, .v(options[["studyLabels"]])]
+    } else {
+      studyLabels <- paste("Study", 1:length(varSE))
+    }
+    df <- data.frame(effectSize = varSE, studyLabels = studyLabels)
+    
+    # assign weights for the point sizes
+    weight <- 1/varSE^2
+    weight_scaled <- ((4-1)*(weight - min(weight)))/(max(weight) - min(weight)) + 1
+    
+    # text for next to the observed points
+    ci <- .95
+    lower <- varSE - qnorm((ci+1)/2) * varSE
+    upper <- varSE + qnorm((ci+1)/2) * varSE
+    
+    text_observed <- format(paste(format(round(varSE, 2),
+                                         nsmall = 2, trim = T), " [",
+                                  format(round(lower, 2), nsmall = 2, trim = T), ", ",
+                                  format(round(upper, 2), nsmall = 2, trim = T), "]",
+                                  sep = ""),
+                            width = 20, justify = "right") # super ugly code
+    
+    xlim <- c(min(lower), max(upper))
+    ylim <- c(0, nrow(varSE))
+    
+    # number of characters left of plot (required for scaling. right side: nchar = 20)
+    nchar_labels <- max(nchar(as.character(studyLabels)))
+    shift_right <- max(xlim)+ diff(xlim)/2 * sqrt(nchar_labels / 20)  # DANIEL: just a heuristic for scaling
+    
+    # create dataframe for model diamond
+    p.left <- m$estimates[1, 3]
+    p.right <- m$estimates[1, 5]
+    p.top <- -0.5 + m$estimates[1, 1] - m$estimates[1, 3]
+    p.bottom <- -0.5 + m$estimates[1, 1] - m$estimates[1, 5]
+    
+    d <- data.frame(x = c(p.left, m$estimates[1, 1],
+                          p.right, m$estimates[1, 1]),
+                    y = c(-0.5, p.top, -0.5, p.bottom))
+    
+    # text for next to model diamond
+    text_overall <- format(paste(format(round(m$estimates[1, 1], 2),
+                                        nsmall = 2, trim = T), " [",
+                                 format(round(m$estimates[1, 3], 2),
+                                        nsmall = 2, trim = T), ", ",
+                                 format(round(m$estimates[1, 5], 2),
+                                        nsmall = 2, trim = T), "]",
+                                 sep = ""),
+                           width = 20, justify = "right")
+    
+    # get data & model specific x limits
+    # if(class(m) == "meta_bma" || m$model == "random"){
+    #   xlim <- c(min(c(lower, lower_estimates)), max(c(upper, upper_estimates)))
+    # } else {
+      xlim <- c(min(lower), max(upper))
+    # }
+    
+    # get data & model specific y limits
+    # if(class(m) != "m_bma"){
+      ylim <- c(-0.5, nrow(df))
+    # } else {
+    #   ylim <- c(-1.5, nrow(data))
+    # }
+      
+    plot <-  ggplot2::ggplot(df,
+                             ggplot2::aes(x = effectSize,
+                                          y = reorder(studyLabels, -effectSize))) +
+      
+      # add dotted vertical line at x = 0
+      ggplot2::geom_vline(xintercept = 0, linetype = "dotted")+
+      
+      # add observed points and text
+      ggplot2::geom_point(shape = 15, size = weight_scaled) +
+      ggplot2::geom_errorbarh(ggplot2::aes(xmin = lower, xmax = upper), height = .1) +
+      ggplot2::annotate("text", label = text_observed,
+               x = shift_right, y = reorder(df$studyLabels, -df$effectSize),
+               hjust = "right") +
+      ggplot2::theme(axis.title.y = ggplot2::element_blank(),
+            axis.line.y = ggplot2::element_blank(),
+            axis.ticks.y = ggplot2::element_blank(),
+            plot.margin = ggplot2::unit(c(1,10,1,1), "lines"), # margin on the right for text
+            panel.grid.major = ggplot2::element_blank(),
+            panel.grid.minor = ggplot2::element_blank(),
+            axis.ticks.x = ggplot2::element_line(size = .3),
+            axis.ticks.length = ggplot2::unit(-1.4, "mm"), # ticks on inside of plot
+            axis.text.x = ggplot2::element_text(margin = ggplot2::unit(c(2.5, 0, 0, 0), "mm")),
+            axis.text.y = ggplot2::element_text(hjust = 1)
+      ) +
+      ggplot2::xlab("Effect Size") +
+      
+      # focus x and y axis on range of interest and clip = 'off' to add the text on the right
+      ggplot2::coord_cartesian(xlim = xlim,
+                      ylim = ylim,
+                      clip = 'off')
+    
+    
+    
+   #plot <- themeJasp(plot)
+    forestPlot$plotObject <- plot
+    
+    return()
+  }
+    
   
   
   

@@ -296,7 +296,7 @@ Form
           Group {
           title: qsTr("Bayes factor computation")
             RadioButtonGroup {
-            name: "bfcomputation"
+            name: "BFComputation"
               RadioButton {
               name: "integration"; label: qsTr("Integration")
               checked: true
