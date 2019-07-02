@@ -480,7 +480,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     forestContainer$dependOn(c("plotForestObserved"))
     jaspResults[["forestContainer"]] <- forestContainer
     
-    forestPlot <- createJaspPlot(plot = NULL, title = "Forest Plot")
+    height <- (nrow(dataset) + 2) * 40
+    
+    forestPlot <- createJaspPlot(plot = NULL, title = "Forest Plot", height = height, width = 400)
     
     
     forestPlot$dependOn(dependencies)
@@ -499,24 +501,25 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   .fillForestPlot <- function(forestPlot, jaspResults, dataset, options){
     m <- jaspResults[["bmaResults"]]$object
     
+    varES <- dataset[, .v(options[["effectSize"]])]
     varSE <- dataset[, .v(options[["standardError"]])]
     if(options[["studyLabels"]] != ""){
       studyLabels <- dataset[, .v(options[["studyLabels"]])]
     } else {
       studyLabels <- paste("Study", 1:length(varSE))
     }
-    df <- data.frame(effectSize = varSE, studyLabels = studyLabels)
+    df <- data.frame(effectSize = varES, studyLabels = studyLabels)
     
     # assign weights for the point sizes
     weight <- 1/varSE^2
-    weight_scaled <- ((4-1)*(weight - min(weight)))/(max(weight) - min(weight)) + 1
+    weight_scaled <- ((4-1)*(weight - min(weight)))/(max(weight) - min(weight)) + 2
     
     # text for next to the observed points
     ci <- .95
-    lower <- varSE - qnorm((ci+1)/2) * varSE
-    upper <- varSE + qnorm((ci+1)/2) * varSE
+    lower <- varES - qnorm((ci+1)/2) * varSE
+    upper <- varES + qnorm((ci+1)/2) * varSE
     
-    text_observed <- format(paste(format(round(varSE, 2),
+    text_observed <- format(paste(format(round(varES, 2),
                                          nsmall = 2, trim = T), " [",
                                   format(round(lower, 2), nsmall = 2, trim = T), ", ",
                                   format(round(upper, 2), nsmall = 2, trim = T), "]",
@@ -524,12 +527,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                             width = 20, justify = "right") # super ugly code
     
     xlim <- c(min(lower), max(upper))
-    ylim <- c(0, nrow(varSE))
+    ylim <- c(0, nrow(df))
     
     # number of characters left of plot (required for scaling. right side: nchar = 20)
     nchar_labels <- max(nchar(as.character(studyLabels)))
-    shift_right <- max(xlim)+ diff(xlim)/2 * sqrt(nchar_labels / 20)  # DANIEL: just a heuristic for scaling
-    
+    shift_right <- max(xlim)+ diff(xlim)/2 * sqrt(nchar_labels / 20) + 3 # DANIEL: just a heuristic for scaling
+
     # create dataframe for model diamond
     p.left <- m$estimates[1, 3]
     p.right <- m$estimates[1, 5]
@@ -566,28 +569,28 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       
     plot <-  ggplot2::ggplot(df,
                              ggplot2::aes(x = effectSize,
-                                          y = reorder(studyLabels, -effectSize))) +
-      
+                                          y = reorder(studyLabels, -effectSize)))+
       # add dotted vertical line at x = 0
-      ggplot2::geom_vline(xintercept = 0, linetype = "dotted")+
+    ggplot2::geom_vline(xintercept = 0, linetype = "dotted")+
       
       # add observed points and text
       ggplot2::geom_point(shape = 15, size = weight_scaled) +
-      ggplot2::geom_errorbarh(ggplot2::aes(xmin = lower, xmax = upper), height = .1) +
+      ggplot2::geom_errorbarh(ggplot2::aes(xmin = lower, xmax = upper), height = .2) +
       ggplot2::annotate("text", label = text_observed,
                x = shift_right, y = reorder(df$studyLabels, -df$effectSize),
-               hjust = "right") +
-      ggplot2::theme(axis.title.y = ggplot2::element_blank(),
-            axis.line.y = ggplot2::element_blank(),
-            axis.ticks.y = ggplot2::element_blank(),
-            plot.margin = ggplot2::unit(c(1,10,1,1), "lines"), # margin on the right for text
-            panel.grid.major = ggplot2::element_blank(),
-            panel.grid.minor = ggplot2::element_blank(),
-            axis.ticks.x = ggplot2::element_line(size = .3),
-            axis.ticks.length = ggplot2::unit(-1.4, "mm"), # ticks on inside of plot
-            axis.text.x = ggplot2::element_text(margin = ggplot2::unit(c(2.5, 0, 0, 0), "mm")),
-            axis.text.y = ggplot2::element_text(hjust = 1)
-      ) +
+               hjust = "right", size = 6) +
+      ggplot2::geom_segment(x = -99, xend = 99, y = 0, yend = 0) +
+      # ggplot2::theme(axis.title.y = ggplot2::element_blank(),
+      #       axis.line.y = ggplot2::element_blank(),
+      #       axis.ticks.y = ggplot2::element_blank(),
+      #       plot.margin = ggplot2::unit(c(1,10,1,1), "lines"), # margin on the right for text
+      #       panel.grid.major = ggplot2::element_blank(),
+      #       panel.grid.minor = ggplot2::element_blank(),
+      #       axis.ticks.x = ggplot2::element_line(size = .3),
+      #       axis.ticks.length = ggplot2::unit(-1.4, "mm"), # ticks on inside of plot
+      #       axis.text.x = ggplot2::element_text(margin = ggplot2::unit(c(2.5, 0, 0, 0), "mm")),
+      #       axis.text.y = ggplot2::element_text(hjust = 1)
+      # ) +
       ggplot2::xlab("Effect Size") +
       
       # focus x and y axis on range of interest and clip = 'off' to add the text on the right
@@ -597,7 +600,30 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
     
     
-   #plot <- themeJasp(plot)
+    plot <- themeJasp(plot,
+                      yAxis = FALSE)
+    
+    plot <- plot +       
+      ggplot2::theme(axis.title.y = ggplot2::element_blank(),
+            axis.line.y = ggplot2::element_blank(),
+            axis.ticks.y = ggplot2::element_blank(),
+            plot.margin = ggplot2::unit(c(1,10,1,1), "lines"), # margin on the right for text
+            # panel.grid.major = ggplot2::element_blank(),
+            # panel.grid.minor = ggplot2::element_blank(),
+            # axis.ticks.x = ggplot2::element_line(size = .3),
+            # axis.ticks.length = ggplot2::unit(-1.4, "mm"), # ticks on inside of plot
+            # axis.text.x = ggplot2::element_text(margin = ggplot2::unit(c(2.5, 0, 0, 0), "mm")),
+            axis.text.y = ggplot2::element_text(hjust = 1)
+      )
+      
+    plot <- plot +
+      ggplot2::geom_polygon(data = d, ggplot2::aes(x = x, y = y)) +
+      ggplot2::annotate("text", label = text_overall,
+               x = shift_right , y = -0.5, hjust = "right", size = 6)+
+      ggplot2::geom_text(ggplot2::aes(x = -Inf, y = -0.5, label = "FE model"),
+                hjust = 1, size = 6)
+    
+    
     forestPlot$plotObject <- plot
     
     return()
