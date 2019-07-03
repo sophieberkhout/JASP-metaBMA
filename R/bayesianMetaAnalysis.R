@@ -521,40 +521,19 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     lower <- varES - qnorm((ci+1)/2) * varSE
     upper <- varES + qnorm((ci+1)/2) * varSE
     
-    text_observed <- format(paste(format(round(varES, 2),
-                                         nsmall = 2, trim = T), " [",
-                                  format(round(lower, 2), nsmall = 2, trim = T), ", ",
-                                  format(round(upper, 2), nsmall = 2, trim = T), "]",
-                                  sep = ""),
-                            width = 20, justify = "right") # super ugly code
+    text_observed <- paste(sprintf('%.2f', varES),
+                           " [",
+                           sprintf('%.2f', lower), 
+                           ", ",
+                           sprintf('%.2f', upper), 
+                           "]",
+                           sep = "")
     
     xlim <- c(min(lower), max(upper))
     ylim <- c(0, nrow(df))
     
-    # number of characters left of plot (required for scaling. right side: nchar = 20)
-    nchar_labels <- max(nchar(as.character(df$studyLabels)))
-    shift_right <- max(xlim)+ diff(xlim)/2 * sqrt(nchar_labels / 20) + 3 # DANIEL: just a heuristic for scaling
+    # nchar_labels <- max(nchar(as.character(df$studyLabels)))
 
-    # create dataframe for model diamond
-    p.left <- m$estimates[1, 3]
-    p.right <- m$estimates[1, 5]
-    p.top <- -0.5 + m$estimates[1, 1] - m$estimates[1, 3]
-    p.bottom <- -0.5 + m$estimates[1, 1] - m$estimates[1, 5]
-    
-    d <- data.frame(x = c(p.left, m$estimates[1, 1],
-                          p.right, m$estimates[1, 1]),
-                    y = c(-0.5, p.top, -0.5, p.bottom))
-    
-    # text for next to model diamond
-    text_overall <- format(paste(format(round(m$estimates[1, 1], 2),
-                                        nsmall = 2, trim = T), " [",
-                                 format(round(m$estimates[1, 3], 2),
-                                        nsmall = 2, trim = T), ", ",
-                                 format(round(m$estimates[1, 5], 2),
-                                        nsmall = 2, trim = T), "]",
-                                 sep = ""),
-                           width = 20, justify = "right")
-    
     # get data & model specific x limits
     # if(class(m) == "meta_bma" || m$model == "random"){
     #   xlim <- c(min(c(lower, lower_estimates)), max(c(upper, upper_estimates)))
@@ -569,41 +548,116 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     #   ylim <- c(-1.5, nrow(data))
     # }
       
+    # estimated points
+    if(options$modelSpecification == "BMA" || options$modelSpecification == "RE"){  
+      mean_estimates <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[1:nrow(df)+2, "mean"]
+      lower_estimates <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[1:nrow(df)+2, "2.5%"]
+      upper_estimates <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[1:nrow(df)+2, "97.5%"]
+      
+      text_estimated <- paste(sprintf('%.2f', mean_estimates),
+                              " [",
+                              sprintf('%.2f', lower_estimates),
+                              ", ",
+                              sprintf('%.2f', upper_estimates),
+                              "]",
+                              sep = "")
+      
+      # get y values for the estimated points
+      y <- seq(.6, nrow(df)- .4, 1)
+      
+      # order from low to high observed effect size
+      order <- rev(attr(reorder(df$effectSize, 1:nrow(df)), "scores"))
+    }
+    
+    # create diamond for averaged model
+    p.left <- m$estimates[1, 3]
+    p.right <- m$estimates[1, 5]
+    p.top <- -0.5 + m$estimates[1, 1] - m$estimates[1, 3]
+    p.bottom <- -0.5 + m$estimates[1, 1] - m$estimates[1, 5]
+    
+    d <- data.frame(x = c(p.left, m$estimates[1, 1],
+                          p.right, m$estimates[1, 1]),
+                    y = c(-0.5, p.top, -0.5, p.bottom))
+    
+    # text for next to model diamond
+    text_averaged <- paste(sprintf('%.2f', m$estimates[1, 1]),
+                           " [",
+                           sprintf('%.2f', m$estimates[1, 3]),
+                           ", ",
+                           sprintf('%.2f', m$estimates[1, 5]),
+                           "]",
+                           sep = "")
+      
+    # diamond for fixed model
+    p.left.fixed <- m$estimates[2, 3]
+    p.right.fixed <- m$estimates[2, 5]
+    p.top.fixed <- -1 + m$estimates[2, 1] - m$estimates[2, 3]
+    p.bottom.fixed <- -1 + m$estimates[2, 1] - m$estimates[2, 5]
+    
+    d.fixed <- data.frame(x = c(p.left.fixed, m$estimates[2, 1],
+                                p.right.fixed, m$estimates[2, 1]),
+                          y = c(-1, p.top.fixed, -1, p.bottom.fixed))
+    
+    text_fixed <- paste(sprintf('%.2f', m$estimates[2, 1]),
+                        " [",
+                        sprintf('%.2f', m$estimates[2, 3]),
+                        ", ",
+                        sprintf('%.2f', m$estimates[2, 5]),
+                        "]",
+                        sep = "")
+    
+    # diamond for random model
+    p.left.random <- m$estimates[3, 3]
+    p.right.random <- m$estimates[3, 5]
+    p.top.random <- -1.5 + m$estimates[3, 1] - m$estimates[3, 3]
+    p.bottom.random <- -1.5 + m$estimates[3, 1] - m$estimates[3, 5]
+    
+    d.random <- data.frame(x = c(p.left.random, m$estimates[3, 1],
+                                 p.right.random, m$estimates[3, 1]),
+                           y = c(-1.5, p.top.random, -1.5, p.bottom.random))
+    
+    text_random <- paste(sprintf('%.2f', m$estimates[3, 1]),
+                         " [",
+                         sprintf('%.2f', m$estimates[3, 3]),
+                         ", ",
+                         sprintf('%.2f', m$estimates[3, 5]),
+                         "]",
+                        sep = "")
+
+    if(options$modelSpecification == "BMA"){
+      yDiamond <- c(-0.5, -1, -1.5)
+      model <- c("Averaged", "Fixed effects", "Random effects")
+      textDiamond <- c(text_averaged, text_fixed, text_random)
+    } else if(options$modelSpecification == "RE"){
+      yDiamond <- -0.5
+      model <- "Random effects"
+      textDiamond <- text_random
+    } else if(options$modelSpecification == "FE"){
+      yDiamond <- -0.5
+      model <- "Fixed effects"
+      textDiamond <- text_fixed
+    } 
+      
     plot <-  ggplot2::ggplot(df,
                              ggplot2::aes(x = effectSize,
                                           y = as.numeric(reorder(studyLabels, -effectSize))))+
       # add dotted vertical line at x = 0
-    ggplot2::geom_vline(xintercept = 0, linetype = "dotted")+
+      ggplot2::geom_vline(xintercept = 0, linetype = "dotted")+
       
       # add observed points and text
       ggplot2::geom_point(shape = 15, size = weight_scaled) +
       ggplot2::geom_errorbarh(ggplot2::aes(xmin = lower, xmax = upper), height = .2) +
-      # ggplot2::annotate("text", label = text_observed,
-      #          x = shift_right, y = reorder(df$studyLabels, -df$effectSize),
-      #          hjust = "right", size = 6) +
-      ggplot2::scale_y_continuous(breaks = c(as.numeric(reorder(df$studyLabels, -df$effectSize)), -0.5),
-                                  labels = c(studyLabels, "Fixed effects"),
+      ggplot2::scale_y_continuous(breaks = c(as.numeric(reorder(df$studyLabels, -df$effectSize)), yDiamond),
+                                  labels = c(studyLabels, model),
                                   sec.axis = ggplot2::sec_axis(~ .,
-                                                               breaks = c(as.numeric(reorder(df$studyLabels, -df$effectSize)), -0.5),
-                                                               labels = c(text_observed, text_overall))) +
-      ggplot2::geom_segment(x = -99, xend = 99, y = 0, yend = 0) +
-      # ggplot2::theme(axis.title.y = ggplot2::element_blank(),
-      #       axis.line.y = ggplot2::element_blank(),
-      #       axis.ticks.y = ggplot2::element_blank(),
-      #       plot.margin = ggplot2::unit(c(1,10,1,1), "lines"), # margin on the right for text
-      #       panel.grid.major = ggplot2::element_blank(),
-      #       panel.grid.minor = ggplot2::element_blank(),
-      #       axis.ticks.x = ggplot2::element_line(size = .3),
-      #       axis.ticks.length = ggplot2::unit(-1.4, "mm"), # ticks on inside of plot
-      #       axis.text.x = ggplot2::element_text(margin = ggplot2::unit(c(2.5, 0, 0, 0), "mm")),
-      #       axis.text.y = ggplot2::element_text(hjust = 1)
-      # ) +
-      ggplot2::xlab("Effect Size") +
+                                                               breaks = c(as.numeric(reorder(df$studyLabels, -df$effectSize)), yDiamond),
+                                                               labels = c(text_observed, textDiamond))) +
+      ggplot2::xlab("Effect Size") 
       
       # focus x and y axis on range of interest and clip = 'off' to add the text on the right
-      ggplot2::coord_cartesian(xlim = xlim,
-                      ylim = ylim,
-                      clip = 'off')
+      # ggplot2::coord_cartesian(xlim = xlim,
+      #                 ylim = ylim,
+      #                 clip = 'off')
     
     
   
@@ -615,23 +669,44 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       ggplot2::theme(axis.title.y = ggplot2::element_blank(),
             axis.line.y = ggplot2::element_blank(),
             axis.ticks.y = ggplot2::element_blank(),
-            # plot.margin = ggplot2::unit(c(1,10,1,1), "lines"), # margin on the right for text
-            # panel.grid.major = ggplot2::element_blank(),
-            # panel.grid.minor = ggplot2::element_blank(),
-            # axis.ticks.x = ggplot2::element_line(size = .3),
-            # axis.ticks.length = ggplot2::unit(-1.4, "mm"), # ticks on inside plot
-            # axis.text.x = ggplot2::element_text(margin = ggplot2::unit(c(2.5, 0, 0, 0), "mm")),
-            axis.text.y = ggplot2::element_text(hjust = 0)
+            axis.text.y = ggplot2::element_text(hjust = 0),
+            axis.text.y.right = ggplot2::element_text(hjust = 1)
       )
-      
+    
     plot <- plot +
       ggplot2::geom_polygon(data = d, ggplot2::aes(x = x, y = y)) 
-      # ggplot2::annotate("text", label = text_overall,
-      #          x = Inf, y = -0.5, hjust = -0.05, size = 6)+
-      # ggplot2::geom_text(ggplot2::aes(x = -Inf, y = -0.5, label = "FE model"),
-      #           hjust = 1.05, size = 6)
     
+    if(options$modelSpecification == "BMA"){
+      plot <- plot +
+      ggplot2::geom_polygon(data = d.fixed, ggplot2::aes(x = x, y = y)) +
+      ggplot2::geom_polygon(data = d.random, ggplot2::aes(x = x, y = y)) 
+    }
     
+    if(options$modelSpecification == "BMA"){
+      plot <- plot +
+      ggplot2::geom_point(ggplot2::aes(x = mean_estimates[order], y = y),
+                 size = weight_scaled[order],
+                 colour = "grey69") +
+      ggplot2::geom_errorbarh(ggplot2::aes(xmin = lower_estimates[order], xmax = upper_estimates[order], y = y),
+                     colour = "grey69", height = .1) +
+      ggplot2::scale_y_continuous(breaks = c(as.numeric(reorder(df$studyLabels, -df$effectSize)), 
+                                             yDiamond),
+                                  labels = c(studyLabels, model),
+                                  sec.axis = ggplot2::sec_axis(~ .,
+                                                               breaks = c(as.numeric(reorder(df$studyLabels, -df$effectSize)), 
+                                                                          yDiamond,
+                                                                          y),
+                                                               labels = c(text_observed, 
+                                                                          textDiamond,
+                                                                          text_estimated)))  +
+      ggplot2::theme(axis.text.y.right = ggplot2::element_text(colour = c(rep(c("black", "grey68"), nrow(df)), rep("black", 3))))
+        
+      # ggplot2::annotate("text", label = text_estimated[order],
+      #          x = shift_right, y = y,
+      #          colour = "grey69",
+      #          hjust = "right")
+    }
+
     forestPlot$plotObject <- plot
     
     return()
