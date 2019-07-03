@@ -215,7 +215,7 @@ Form
             					}
             					RadioButton
             					{
-            						label: qsTr("t"); name: "t"; childrenOnSameRow: true; id: tInformative
+            						label: qsTr("t"); name: "t"; childrenOnSameRow: false; id: tInformative
             						DoubleField { label: qsTr("location:"); name: "informativeTLocation"; visible: tInformative.checked; defaultValue: 0; negativeValues: true }
             						DoubleField { label: qsTr("scale:"); name: "informativeTScale"; visible: tInformative.checked; defaultValue: 0.707; fieldWidth: 50 }
             						IntegerField { label: qsTr("df:"); name: "informativeTDf"; visible: tInformative.checked; defaultValue: 1 }
@@ -280,7 +280,6 @@ Form
           name: "plotPosterior"
           label: qsTr("Prior and posterior")
           }
-
   }
 
     Section {

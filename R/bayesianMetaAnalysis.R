@@ -604,7 +604,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                       clip = 'off')
     
     
-    
+  
+
     plot <- themeJasp(plot,
                       yAxis = FALSE)
     
@@ -616,7 +617,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
             # panel.grid.major = ggplot2::element_blank(),
             # panel.grid.minor = ggplot2::element_blank(),
             # axis.ticks.x = ggplot2::element_line(size = .3),
-            # axis.ticks.length = ggplot2::unit(-1.4, "mm"), # ticks on inside of plot
+            # axis.ticks.length = ggplot2::unit(-1.4, "mm"), # ticks on inside plot
             # axis.text.x = ggplot2::element_text(margin = ggplot2::unit(c(2.5, 0, 0, 0), "mm")),
             axis.text.y = ggplot2::element_text(hjust = 1)
       )
@@ -624,9 +625,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     plot <- plot +
       ggplot2::geom_polygon(data = d, ggplot2::aes(x = x, y = y)) +
       ggplot2::annotate("text", label = text_overall,
-               x = Inf, y = -0.5, hjust = 0, size = 6)+
+               x = Inf, y = -0.5, hjust = -0.05, size = 6)+
       ggplot2::geom_text(ggplot2::aes(x = -Inf, y = -0.5, label = "FE model"),
-                hjust = 1, size = 6)
+                hjust = 1.05, size = 6)
     
     
     forestPlot$plotObject <- plot
