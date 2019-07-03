@@ -504,10 +504,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     varES <- dataset[, .v(options[["effectSize"]])]
     varSE <- dataset[, .v(options[["standardError"]])]
     if(options[["studyLabels"]] != ""){
-      studyLabels <- dataset[, .v(options[["studyLabels"]])]
+      studyLabels <- as.character(dataset[, .v(options[["studyLabels"]])])
     } else {
       studyLabels <- paste("Study", 1:length(varSE))
     }
+    
+    
     df <- data.frame(effectSize = varES, studyLabels = studyLabels)
     
     # assign weights for the point sizes
@@ -530,7 +532,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     ylim <- c(0, nrow(df))
     
     # number of characters left of plot (required for scaling. right side: nchar = 20)
-    nchar_labels <- max(nchar(as.character(studyLabels)))
+    nchar_labels <- max(nchar(as.character(df$studyLabels)))
     shift_right <- max(xlim)+ diff(xlim)/2 * sqrt(nchar_labels / 20) + 3 # DANIEL: just a heuristic for scaling
 
     # create dataframe for model diamond
@@ -579,11 +581,11 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       # ggplot2::annotate("text", label = text_observed,
       #          x = shift_right, y = reorder(df$studyLabels, -df$effectSize),
       #          hjust = "right", size = 6) +
-      ggplot2::scale_y_continuous(breaks = 1:length(studyLabels),
-                                  labels = studyLabels,
+      ggplot2::scale_y_continuous(breaks = c(as.numeric(reorder(df$studyLabels, -df$effectSize)), -0.5),
+                                  labels = c(studyLabels, "Fixed effects"),
                                   sec.axis = ggplot2::sec_axis(~ .,
-                                                               breaks = 1:length(text_observed),
-                                                               labels = text_observed)) +
+                                                               breaks = c(as.numeric(reorder(df$studyLabels, -df$effectSize)), -0.5),
+                                                               labels = c(text_observed, text_overall))) +
       ggplot2::geom_segment(x = -99, xend = 99, y = 0, yend = 0) +
       # ggplot2::theme(axis.title.y = ggplot2::element_blank(),
       #       axis.line.y = ggplot2::element_blank(),
@@ -619,15 +621,15 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
             # axis.ticks.x = ggplot2::element_line(size = .3),
             # axis.ticks.length = ggplot2::unit(-1.4, "mm"), # ticks on inside plot
             # axis.text.x = ggplot2::element_text(margin = ggplot2::unit(c(2.5, 0, 0, 0), "mm")),
-            axis.text.y = ggplot2::element_text(hjust = 1)
+            axis.text.y = ggplot2::element_text(hjust = 0)
       )
       
     plot <- plot +
-      ggplot2::geom_polygon(data = d, ggplot2::aes(x = x, y = y)) +
-      ggplot2::annotate("text", label = text_overall,
-               x = Inf, y = -0.5, hjust = -0.05, size = 6)+
-      ggplot2::geom_text(ggplot2::aes(x = -Inf, y = -0.5, label = "FE model"),
-                hjust = 1.05, size = 6)
+      ggplot2::geom_polygon(data = d, ggplot2::aes(x = x, y = y)) 
+      # ggplot2::annotate("text", label = text_overall,
+      #          x = Inf, y = -0.5, hjust = -0.05, size = 6)+
+      # ggplot2::geom_text(ggplot2::aes(x = -Inf, y = -0.5, label = "FE model"),
+      #           hjust = 1.05, size = 6)
     
     
     forestPlot$plotObject <- plot

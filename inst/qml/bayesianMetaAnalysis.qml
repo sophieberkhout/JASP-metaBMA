@@ -215,13 +215,13 @@ Form
             					}
             					RadioButton
             					{
-            						label: qsTr("t"); name: "t"; childrenOnSameRow: false; id: tInformative
+            						label: qsTr("t"); name: "t"; childrenOnSameRow: true; id: tInformative
             						DoubleField { label: qsTr("location:"); name: "informativeTLocation"; visible: tInformative.checked; defaultValue: 0; negativeValues: true }
             						DoubleField { label: qsTr("scale:"); name: "informativeTScale"; visible: tInformative.checked; defaultValue: 0.707; fieldWidth: 50 }
             						IntegerField { label: qsTr("df:"); name: "informativeTDf"; visible: tInformative.checked; defaultValue: 1 }
                         CheckBox
                         {
-                          name: "truncT"; label: qsTr("truncation:"); visible: tInformative.checked; childrenOnSameRow: true
+                          name: "truncT"; label: qsTr("truncation:"); visible: tInformative.checked; childrenOnSameRow: false
                           DoubleField { label: qsTr("from"); name: "lowerTruncT"; visible: tInformative.checked; id: lowerTT;
                                         fieldWidth: 50; negativeValues: true; defaultValue: -1; max: upperTT.defaultValue - 1}
                           DoubleField { label: qsTr("to"); name: "upperTruncT"; visible: tInformative.checked; id: upperTT;
