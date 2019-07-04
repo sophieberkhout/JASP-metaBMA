@@ -51,8 +51,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     .priorAndPosteriorPlot(jaspResults, dataset, options, ready)
   }
   
-  .forestPlot(jaspResults, dataset, options, ready, dependencies)
-  
+  if(options$forestPlot){  
+    .forestPlot(jaspResults, dataset, options, ready, dependencies)
+  }
 }
   
   .readData <- function(jaspResults, options){
@@ -694,12 +695,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                   labels = c(studyLabels, model),
                                   sec.axis = ggplot2::sec_axis(~ .,
                                                                breaks = c(as.numeric(reorder(df$studyLabels, -df$effectSize)), 
-                                                                          yDiamond,
-                                                                          y),
+                                                                          y,
+                                                                          yDiamond),
                                                                labels = c(text_observed, 
-                                                                          textDiamond,
-                                                                          text_estimated)))  +
-      ggplot2::theme(axis.text.y.right = ggplot2::element_text(colour = c(rep(c("black", "grey68"), nrow(df)), rep("black", 3))))
+                                                                          text_estimated,
+                                                                          textDiamond)))  +
+      ggplot2::theme(axis.text.y.right = ggplot2::element_text(colour = c(rep(c("black", "grey68"), each = nrow(df)), rep("black", 3))))
         
       # ggplot2::annotate("text", label = text_estimated[order],
       #          x = shift_right, y = y,
