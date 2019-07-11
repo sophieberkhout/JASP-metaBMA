@@ -272,6 +272,7 @@ Form
           checked: true
           }
           CheckBox {
+          enabled: checkRE.checked || checkBMA.checked
           name: "plotForestEstimated"
           label: qsTr("Estimated")
           }
