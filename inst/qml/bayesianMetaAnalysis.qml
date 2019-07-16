@@ -31,6 +31,7 @@ Form
           name: "effectSize"
           title: qsTr("Effect Size")
           singleVariable: true
+          allowedColumns: ["scale"]
       }
       AssignedVariablesList
       {
@@ -39,6 +40,7 @@ Form
           name: "standardError"
           title: qsTr("Effect Size Standard Error")
           singleVariable: true
+          allowedColumns: ["scale"]
       }
       AssignedVariablesList
       {
@@ -48,6 +50,7 @@ Form
           title: qsTr("95% CI Lower and Upper Bound")
           singleVariable: true
           listViewType: "Pairs"
+          allowedColumns: ["scale"]
       }
       AssignedVariablesList
       {
@@ -97,11 +100,13 @@ Form
                       value: "allPos"
                       label: qsTr("All positive")
                       checked: true
+                      id: checkPos
                     }
                     RadioButton
                     {
                       value: "allNeg"
                       label: qsTr("All negative")
+                      id: checkNeg
                     }
                 }
             }
@@ -192,11 +197,44 @@ Form
                                       defaultValue: 0.707; fieldWidth: 50}
                         CheckBox
                         {
-                          name: "truncCauchy"; label: qsTr("truncation:"); visible: cauchyInformative.checked; childrenOnSameRow: true
+                          name: "truncCauchy"; label: qsTr("truncation:"); visible: cauchyInformative.checked; childrenOnSameRow: false
                           DoubleField { label: qsTr("from"); name: "lowerTruncCauchy"; visible: cauchyInformative.checked; id: lowerTC;
-                                        fieldWidth: 50; negativeValues: true; defaultValue: -1; max: upperTC.defaultValue - 1}
+                                        fieldWidth: 50;
+                                        negativeValues:
+                                        {
+                                          if(checkCRE.checked && checkPos.checked){false}
+                                          else {true}
+                                        }
+                                        defaultValue:
+                                        {
+                                          if(checkCRE.checked && checkPos.checked){0}
+                                          else {-1}
+                                        }
+                                        max:
+                                        {
+                                          if(checkCRE.checked && checkNeg.checked){-0.001}
+                                          else if(checkCRE.checked && checkPos.checked){0}
+                                          else {upperTC.defaultValue - 1}
+                                        }
+                                      }
                           DoubleField { label: qsTr("to"); name: "upperTruncCauchy"; visible: cauchyInformative.checked; id: upperTC;
-                                        fieldWidth: 50; negativeValues: true; defaultValue: 1; min: lowerTC.defaultValue + 1}
+                                        fieldWidth: 50;
+                                        negativeValues:
+                                        {
+                                          if(checkCRE.checked && checkPos.checked){false}
+                                          else {true}
+                                        }
+                                        defaultValue:
+                                        {
+                                          if(checkCRE.checked && checkNeg.checked){0}
+                                          else {1}
+                                        }
+                                        // min: lowerTC.defaultValue + 1;
+                                        max:
+                                        {
+                                          if(checkCRE.checked && checkNeg.checked){0}
+                                        }
+                                      }
                         }
                       }
             					RadioButton
@@ -206,7 +244,7 @@ Form
             						DoubleField { label: qsTr("std:"); name: "informativeNormalStd"; visible: normalInformative.checked; defaultValue: 0.707; fieldWidth: 50 }
                         CheckBox
                         {
-                          name: "truncNormal"; label: qsTr("truncation:"); visible: normalInformative.checked; childrenOnSameRow: true
+                          name: "truncNormal"; label: qsTr("truncation:"); visible: normalInformative.checked; childrenOnSameRow: false
                           DoubleField { label: qsTr("from"); name: "lowerTruncNormal"; visible: normalInformative.checked; id: lowerTN;
                                         fieldWidth: 50; negativeValues: true; defaultValue: -1; max: upperTN.defaultValue - 1}
                           DoubleField { label: qsTr("to"); name: "upperTruncNormal"; visible: normalInformative.checked; id: upperTN;
