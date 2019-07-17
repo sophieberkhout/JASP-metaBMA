@@ -1,9 +1,2 @@
 export(BayesianMetaAnalysis)
-  import('bridgesampling');
-  import('rstan');
-  import('rstantools');
-  import('LaplacesDemon');
-  import('logspline');
-  import('coda');
-  import('knitr');
-  import('methods');
+  import('metaBMA');

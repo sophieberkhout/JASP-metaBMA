@@ -11,12 +11,7 @@
   },
 
   "requiredPackages": [
-    "bridgesampling",
-    "rstan",
-    "rstantools",
-    "LaplacesDemon",
-    "logspline",
-    "coda", "knitr", "methods"
+    "metaBMA"
   ],
 
   "menu":
