@@ -62,7 +62,7 @@ Form
       name: "studyLabels"
       title: qsTr("Study Labels")
       singleVariable: true
-      // allowedColumns: ["nominal"]
+      allowedColumns: ["nominalText"]
     }
   }
 //// End variable inputs ////
@@ -96,6 +96,7 @@ Form
         label: qsTr("Model averaging")
         id: checkBMA
         checked: true
+        // onChecked: priorH0FE.value = 0.9999
       }
 // Ordered effects
       RadioButton
@@ -140,7 +141,7 @@ Form
         {
           name: "priorH0FE"
           label: "H\u2080"
-          id: "priorH0FE"
+          id: priorH0FE
           defaultValue:
           {
             if (checkFE.checked) 0.5
@@ -239,61 +240,62 @@ Form
             fieldWidth: 50
           }
     // Cauchy truncation NOT WORKING PROPERLY YET
-          CheckBox
+          Group
           {
-            name: "truncCauchy";
-            label: qsTr("truncation:");
-            visible: cauchyInformative.checked;
-            childrenOnSameRow: false;
-            checked: if(checkCRE.checked){true} else {false}
-            DoubleField
+            CheckBox
             {
-              label: qsTr("from");
-              name: "lowerTruncCauchy";
+              name: "checkLowerTruncCauchy";
               visible: cauchyInformative.checked;
-              id: lowerTC;
-              fieldWidth: 50;
-              negativeValues:
+              childrenOnSameRow: true;
+              checked: if(checkCRE.checked && checkPos.checked){true} else {false}
+              DoubleField
               {
-                if(checkCRE.checked && checkPos.checked){false}
-                else {true}
+                name: "lowerTruncCauchy";
+                label: qsTr("Lower truncated at:");
+                visible: cauchyInformative.checked;
+                id: lowerTC;
+                fieldWidth: 50;
+                negativeValues:
+                {
+                  if(checkCRE.checked && checkPos.checked){false}
+                  else {true}
+                }
+                defaultValue: 0
+                max:
+                {
+                  if(checkCRE.checked && checkNeg.checked){0}
+                  else {Infinity}
+                }
+              // This is the lower limit of the prior.
+              // It must be smaller than the upper limit.
+              // Also, for the ordered effects analysis,
+              // the truncation needs to be either all positive or all negative.
               }
-              defaultValue:
-              {
-                if(checkCRE.checked && checkPos.checked){0}
-                else {-1}
-              }
-              max:
-              {
-                if(checkCRE.checked && checkNeg.checked){-0.001}
-              //  else {upperTC.defaultValue - 1}
-              }
-            // This is the lower limit of the prior.
-            // It must be smaller than the upper limit.
-            // Also, for the ordered effects analysis,
-            // the truncation needs to be either all positive or all negative.
             }
-            DoubleField
+            CheckBox
             {
-              label: qsTr("to");
-              name: "upperTruncCauchy";
+              name: "checkUpperTruncCauchy";
               visible: cauchyInformative.checked;
-              id: upperTC;
-              fieldWidth: 50;
-              negativeValues:
+              childrenOnSameRow: true;
+              checked: if(checkCRE.checked && checkNeg.checked){true} else {false}
+              DoubleField
               {
-                if(checkCRE.checked && checkPos.checked){false}
-                else {true}
-              }
-              defaultValue:
-              {
-                if(checkCRE.checked && checkNeg.checked){0}
-                else {1}
-              }
-              // min: lowerTC.defaultValue + 1;
-              max:
-              {
-              //  if(checkCRE.checked && checkNeg.checked){0}
+                name: "upperTruncCauchy";
+                label: qsTr("Upper truncated at:");
+                visible: cauchyInformative.checked;
+                id: upperTC;
+                fieldWidth: 50;
+                negativeValues:
+                {
+                  if(checkCRE.checked && checkPos.checked){false}
+                  else {true}
+                }
+                defaultValue: 0
+                max:
+                {
+                  if(checkCRE.checked && checkNeg.checked){0}
+                  else {Infinity}
+                }
               }
             }
           }
@@ -324,36 +326,63 @@ Form
             fieldWidth: 50
           }
     // Normal truncation NOT WORKING PROPERLY YET
-          CheckBox
+          Group
           {
-            name: "truncNormal";
-            label: qsTr("truncation:");
-            visible: normalInformative.checked;
-            childrenOnSameRow: false
-            DoubleField
+            CheckBox
             {
-              label: qsTr("from");
-              name: "lowerTruncNormal";
+              name: "checkLowerTruncNormal";
               visible: normalInformative.checked;
-              id: lowerTN;
-              fieldWidth: 50;
-              negativeValues: true;
-              defaultValue: -1;
-              max: upperTN.defaultValue - 1
+              childrenOnSameRow: true
+              checked: if(checkCRE.checked && checkPos.checked){true} else {false}
+              DoubleField
+              {
+                name: "lowerTruncNormal";
+                label: qsTr("Lower truncated at:");
+                visible: normalInformative.checked;
+                id: lowerTN;
+                fieldWidth: 50;
+                negativeValues:
+                {
+                  if(checkCRE.checked && checkPos.checked){false}
+                  else {true}
+                }
+                defaultValue: 0
+                max:
+                {
+                  if(checkCRE.checked && checkNeg.checked){0}
+                  else {Infinity}
+                }
+              }
             }
-            DoubleField
+            CheckBox
             {
-              label: qsTr("to");
-              name: "upperTruncNormal";
+              name: "checkUpperTruncNormal";
               visible: normalInformative.checked;
-              id: upperTN;
-              fieldWidth: 50;
-              negativeValues: true;
-              defaultValue: 1;
-              min: lowerTN.defaultValue + 1
+              childrenOnSameRow: true;
+              checked: if(checkCRE.checked && checkNeg.checked){true} else {false}
+              DoubleField
+              {
+                name: "upperTruncNormal";
+                label: qsTr("Upper truncated at:");
+                visible: normalInformative.checked;
+                id: upperTN;
+                fieldWidth: 50;
+                negativeValues:
+                {
+                  if(checkCRE.checked && checkPos.checked){false}
+                  else {true}
+                }
+                defaultValue: 0
+                max:
+                {
+                  if(checkCRE.checked && checkNeg.checked){0}
+                  else {Infinity}
+                }
+              }
             }
           }
-			  }
+        }
+
 
 // T prior
 				RadioButton
@@ -390,35 +419,62 @@ Form
             defaultValue: 1
           }
     // T truncation NOT WORKING PROPERLY YET
-          CheckBox
+          Group
           {
-            name: "truncT";
-            label: qsTr("truncation:");
-            visible: tInformative.checked;
-            childrenOnSameRow: false
-            DoubleField
+            CheckBox
             {
-              label: qsTr("from");
-              name: "lowerTruncT";
+              name: "checkLowerTruncT";
               visible: tInformative.checked;
-              id: lowerTT;
-              fieldWidth: 50;
-              negativeValues: true;
-              defaultValue: -1;
-              max: upperTT.defaultValue - 1
+              childrenOnSameRow: true
+              checked: if(checkCRE.checked && checkPos.checked){true} else {false}
+              DoubleField
+              {
+                name: "lowerTruncT";
+                label: qsTr("Lower truncated at:");
+                visible: tInformative.checked;
+                id: lowerTT;
+                fieldWidth: 50;
+                negativeValues:
+                {
+                  if(checkCRE.checked && checkPos.checked){false}
+                  else {true}
+                }
+                defaultValue: 0
+                max:
+                {
+                  if(checkCRE.checked && checkNeg.checked){0}
+                  else {Infinity}
+                }
+              }
             }
-            DoubleField
+            CheckBox
             {
-              label: qsTr("to");
-              name: "upperTruncT";
+              name: "checkUpperTruncT";
               visible: tInformative.checked;
-              id: upperTT;
-              fieldWidth: 50;
-              negativeValues: true;
-              defaultValue: 1;
-              min: lowerTT.defaultValue + 1
+              childrenOnSameRow: true;
+              checked: if(checkCRE.checked && checkNeg.checked){true} else {false}
+              DoubleField
+              {
+                name: "upperTruncT";
+                label: qsTr("Upper truncated at:");
+                visible: tInformative.checked;
+                id: upperTT;
+                fieldWidth: 50;
+                negativeValues:
+                {
+                  if(checkCRE.checked && checkPos.checked){false}
+                  else {true}
+                }
+                defaultValue: 0
+                max:
+                {
+                  if(checkCRE.checked && checkNeg.checked){0}
+                  else {Infinity}
+                }
+              }
             }
           }
+
 				}
 			}
 // End prior effect size //
@@ -499,21 +555,31 @@ Form
 // Forest plot with obtion to show observed, estimated or both effect sizes.
       CheckBox
       {
-        name: "forestPlot"
+        name: "checkForestPlot"
         label: qsTr("Forest plot")
         checked: true
-        CheckBox
+        RadioButtonGroup
+        {
+        name: "forestPlot"
+        RadioButton
         {
         name: "plotForestObserved"
         label: qsTr("Observed")
         checked: true
         }
-        CheckBox
+        RadioButton
         {
         enabled: !checkFE.checked
         name: "plotForestEstimated"
         label: qsTr("Estimated")
         }
+        RadioButton
+        {
+        enabled: !checkFE.checked
+        name: "plotForestBoth"
+        label: qsTr("Both")
+        }
+      }
       }
 // Prior and posterior plot
       CheckBox
