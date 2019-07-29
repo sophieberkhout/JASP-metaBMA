@@ -127,79 +127,26 @@ Form
     }
 //// End analysis choices ////
 
-//// Prior model probabilities (defaults differ per model) ////
-    Group
+Group
+{
+    title: qsTr("Table")
+    CheckBox
     {
-      enabled: checkFE.checked || checkRE.checked || checkBMA.checked
-      title: qsTr("Prior model probability")
-      Group
-      {
-        enabled: checkFE.checked || checkBMA.checked
-        title: qsTr("Fixed effects")
-    // Fixed effect null hypothesis
-        DoubleField
-        {
-          name: "priorH0FE"
-          label: "H\u2080"
-          id: priorH0FE
-          defaultValue:
-          {
-            if (checkFE.checked) 0.5
-            else if (checkRE.checked) 0
-            else if (checkBMA.checked) 0.25
-            else 0
-          }
-        }
-    // Fixed effects alternative
-        DoubleField
-        {
-          name: "priorH1FE"
-          label: "H\u2081"
-          id: "priorH1FE"
-          defaultValue:
-          {
-            if(checkFE.checked){0.5}
-            else if(checkRE.checked){0}
-            else if(checkBMA.checked){0.25}
-            else {0}
-          }
-        }
-      }
-      Group
-      {
-        title: qsTr("Random effects")
-        enabled: checkRE.checked || checkBMA.checked
-    // Random effects null
-        DoubleField
-        {
-          name: "priorH0RE"
-          label: "H\u2080"
-          id: "priorH0RE"
-          defaultValue:
-          {
-            if(checkFE.checked){0}
-            else if(checkRE.checked){0.5}
-            else if(checkBMA.checked){0.25}
-            else {0}
-          }
-        }
-    // Random effects alternative
-        DoubleField
-        {
-          name: "priorH1RE"
-          label: "H\u2081"
-          id: "priorH1RE"
-          defaultValue:
-          {
-            if(checkFE.checked){0}
-            else if(checkRE.checked){0.5}
-            else if(checkBMA.checked){0.25}
-            else {0}
-          }
-        }
-      }
+      name: "mainTable";
+      label: qsTr("Posterior model estimates")
+      checked: true
     }
-//// End prior model probabilities ////
+    CheckBox
+    {
+      name: "postTable";
+      label: qsTr("Model probabilities")
+    }
+    CheckBox
+    {
+      name: "esTable";
+      label: qsTr("Effect sizes per study")
+    }
+}
 
 //// Priors ////
     Section
@@ -251,7 +198,7 @@ Form
               DoubleField
               {
                 name: "lowerTruncCauchy";
-                label: qsTr("Lower truncated at:");
+                label: qsTr("Lower bound:");
                 visible: cauchyInformative.checked;
                 id: lowerTC;
                 fieldWidth: 50;
@@ -281,7 +228,7 @@ Form
               DoubleField
               {
                 name: "upperTruncCauchy";
-                label: qsTr("Upper truncated at:");
+                label: qsTr("Upper bound:");
                 visible: cauchyInformative.checked;
                 id: upperTC;
                 fieldWidth: 50;
@@ -337,7 +284,7 @@ Form
               DoubleField
               {
                 name: "lowerTruncNormal";
-                label: qsTr("Lower truncated at:");
+                label: qsTr("Lower bound:");
                 visible: normalInformative.checked;
                 id: lowerTN;
                 fieldWidth: 50;
@@ -363,7 +310,7 @@ Form
               DoubleField
               {
                 name: "upperTruncNormal";
-                label: qsTr("Upper truncated at:");
+                label: qsTr("Upper bound:");
                 visible: normalInformative.checked;
                 id: upperTN;
                 fieldWidth: 50;
@@ -430,7 +377,7 @@ Form
               DoubleField
               {
                 name: "lowerTruncT";
-                label: qsTr("Lower truncated at:");
+                label: qsTr("Lower bound:");
                 visible: tInformative.checked;
                 id: lowerTT;
                 fieldWidth: 50;
@@ -456,7 +403,7 @@ Form
               DoubleField
               {
                 name: "upperTruncT";
-                label: qsTr("Upper truncated at:");
+                label: qsTr("Upper bound:");
                 visible: tInformative.checked;
                 id: upperTT;
                 fieldWidth: 50;
@@ -553,10 +500,13 @@ Form
       columns: 1
       title: qsTr("Plots")
 // Forest plot with obtion to show observed, estimated or both effect sizes.
+Group{
+  columns: 2
       CheckBox
       {
         name: "checkForestPlot"
         label: qsTr("Forest plot")
+        id: checkForest
         checked: true
         RadioButtonGroup
         {
@@ -581,11 +531,38 @@ Form
         }
       }
       }
+      RadioButtonGroup
+      {
+        name: "orderForest"
+        title: qsTr("Order")
+        enabled: checkForest.checked
+        RadioButton
+        {
+          name: "ascendingForest"
+          label: qsTr("Ascending")
+        }
+        RadioButton
+        {
+          name: "labelForest"
+          label: qsTr("By label")
+        }
+      }
+    }
+      CheckBox
+      {
+        name: "plotCumForest"
+        label: qsTr("Cumulative forest plot")
+      }
 // Prior and posterior plot
       CheckBox
       {
       name: "plotPosterior"
       label: qsTr("Prior and posterior")
+      }
+      CheckBox
+      {
+      name: "plotSequential"
+      label: qsTr("Sequential plot")
       }
     }
 //// End plots section ////
@@ -593,9 +570,84 @@ Form
 //// Advanced section for sampling settings ////
     Section
     {
-      columns: 1
+      columns: 2
       title: qsTr("Advanced")
+
+// Prior model probabilities (defaults differ per model) //
+      Group
+      {
+        enabled: checkFE.checked || checkRE.checked || checkBMA.checked
+        title: qsTr("Prior model probability")
+        Group
+        {
+          enabled: checkFE.checked || checkBMA.checked
+          title: qsTr("Fixed effects")
+      // Fixed effect null hypothesis
+          DoubleField
+          {
+            name: "priorH0FE"
+            label: "H\u2080"
+            id: priorH0FE
+            defaultValue:
+            {
+              if (checkFE.checked) 0.5
+              else if (checkRE.checked) 0
+              else if (checkBMA.checked) 0.25
+              else 0
+            }
+          }
+      // Fixed effects alternative
+          DoubleField
+          {
+            name: "priorH1FE"
+            label: "H\u2081"
+            id: "priorH1FE"
+            defaultValue:
+            {
+              if(checkFE.checked){0.5}
+              else if(checkRE.checked){0}
+              else if(checkBMA.checked){0.25}
+              else {0}
+            }
+          }
+        }
+        Group
+        {
+          title: qsTr("Random effects")
+          enabled: checkRE.checked || checkBMA.checked
+      // Random effects null
+          DoubleField
+          {
+            name: "priorH0RE"
+            label: "H\u2080"
+            id: "priorH0RE"
+            defaultValue:
+            {
+              if(checkFE.checked){0}
+              else if(checkRE.checked){0.5}
+              else if(checkBMA.checked){0.25}
+              else {0}
+            }
+          }
+      // Random effects alternative
+          DoubleField
+          {
+            name: "priorH1RE"
+            label: "H\u2081"
+            id: "priorH1RE"
+            defaultValue:
+            {
+              if(checkFE.checked){0}
+              else if(checkRE.checked){0.5}
+              else if(checkBMA.checked){0.25}
+              else {0}
+            }
+          }
+        }
+      }
+// End prior model probabilities //
 // MCMC estimation settings
+Group{
       Group
       {
         title: qsTr("Estimation settings (MCMC)")
@@ -605,7 +657,10 @@ Form
         {
           label: qsTr("iterations:");
           name: "iterMCMC";
-          defaultValue: 2000;
+          defaultValue:
+          if(!checkCRE.checked){2000}
+          else {10000}
+
           max: 1000000;
           fieldWidth: 50
         }
@@ -654,6 +709,7 @@ Form
           }
         }
       }
+    }
     }
 //// End advanced section ////
   }
