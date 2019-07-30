@@ -232,7 +232,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                        tau = tau,
                                        # logml = logml,
                                        # logml_iter = logml_iter,
-                                       iter = iter,
+                                       # iter = iter,
                                        # chains = chains
                                        )    
     } else {
@@ -348,24 +348,24 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       BF <- m$BF["fixed_H1", "fixed_H0"]
     }
     else if(options$modelSpecification == "CRE"){
-      model <- c(modelFE, modelCRE, modelCRE, modelCRE, modelRE, modelRE)
-      parameter <- c(eta, mu, eta, tau, eta, tau)
-      group <- c(T, T, F, F, T, F)
+      model <- c(modelFE, modelCRE, modelCRE, modelRE, modelRE)
+      parameter <- c(eta, eta, tau, eta, tau)
+      group <- c(T, T, F, T, F)
       meanES <- c(m$estimates["fixed", "mean"],
-                  m$meta$ordered$estimates[c("average_effect", "d", "tau"), "mean"],
+                  m$meta$ordered$estimates[c("average_effect", "tau"), "mean"],
                   m$meta$random$estimates[, "mean"])
       meanSD <- c(m$estimates["fixed", "sd"],
-                  m$meta$ordered$estimates[c("average_effect", "d", "tau"), "sd"],
+                  m$meta$ordered$estimates[c("average_effect", "tau"), "sd"],
                   m$meta$random$estimates[, "sd"])
       lower <- c(m$estimates["fixed", "2.5%"],
-                 m$meta$ordered$estimates[c("average_effect", "d", "tau"), "2.5%"],
+                 m$meta$ordered$estimates[c("average_effect", "tau"), "2.5%"],
                  m$meta$random$estimates[, "2.5%"])
       upper <- c(m$estimates["fixed", "97.5%"],
-                 m$meta$ordered$estimates[c("average_effect", "d", "tau"), "97.5%"],
+                 m$meta$ordered$estimates[c("average_effect", "tau"), "97.5%"],
                  m$meta$random$estimates[, "97.5%"])
       BF <- c(m$BF["fixed", "null"],
               m$BF["ordered", "null"],
-              NA, NA,
+              m$BF["ordered", "fixed"],
               m$BF["random", "null"],
               m$BF["random", "fixed"])
     }
@@ -385,7 +385,14 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
     if(options$modelSpecification == "BMA")
       bmaTable$addFootnote("Averaged over the fixed effects model and the random effects model.",
-                           colNames = "model", rowNames="row1") # add rowNames somehow
+                           colNames = "model", rowNames="row1") 
+    if(options$modelSpecification == "CRE"){
+      bmaTable$addFootnote(paste0("Bayes Factor of the ordered versus null model. The Bayes Factor for ordered versus unconstrained model is ",
+                                 round(m$BF["ordered", "random"], 3),
+                                 "."),
+                           colNames = "BF", rowNames="row2") 
+      
+    }
   }
   
   # Table: Model Probabilities
@@ -626,7 +633,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     jaspResults[["postContainer"]]$position <- 5
     
     # Create empty plot
-    postPlotES <- createJaspPlot(plot = NULL, title = "Effect size", width = 350, height = 350)
+    postPlotES <- createJaspPlot(plot = NULL, title = "Effect size", width = 450, height = 350)
     
     # Custom dependencies
     postPlotES$dependOn(c("priorES", "cauchy", "normal", "t",
@@ -648,7 +655,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 
     # Make posterior plot heterogeneity
     if(options$modelSpecification != "FE"){
-      postPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity", width = 350, height = 350)
+      postPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity", width = 450, height = 350)
       postPlotSE$dependOn(c("priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
                             "halfT", "informativehalfTScale", "informativehalfTDf"))
       postContainer[["SE"]] <- postPlotSE
@@ -692,45 +699,58 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     # Make dataframe of prior and posterior functions
     df <- data.frame(x = c(0, 1), l = c("Prior", "Posterior"))
     
-    # Plot prior and posterior
-    plot <- ggplot2::ggplot(df, ggplot2::aes(x)) +
-      ggplot2::stat_function(fun = mPost, n = 1000, size = 1, ggplot2::aes(linetype = "Posterior")) +
-      ggplot2::stat_function(fun = mPrior, n = 1000, size = 1, ggplot2::aes(linetype = "Prior")) +
-      ggplot2::scale_linetype_manual(values = c("solid", "dotted")) +
-      ggplot2::stat_function(fun = mPost, 
-                    xlim = int,
-                    geom = "area", alpha = 0.2, show.legend = F) +
-      # ggplot2::geom_segment(ggplot2::aes(x = e, xend = e, y = 0, yend = mPost(e)-.01), size = 0.5) +
-      ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
-      # ggplot2::geom_vline(ggplot2::aes(xintercept = mode(x))) + 
-      # theme_classic() +
-      # ggplot2::theme(legend.position = "top",
-      #       legend.spacing.x = ggplot2::unit(0.3, "cm"),
-      #       legend.title = ggplot2::element_blank()) +
-      ggplot2::labs(x = xlab, y = "Density") +
-      ggplot2::guides(colour = ggplot2::guide_legend(ncol=1,nrow=2,byrow=TRUE)) +
-      ggplot2::guides(linetype = ggplot2::guide_legend(ncol=1,nrow=2,byrow=TRUE)) +
-      ggplot2::xlim(xlim)
-    
-    # Names for legend label posterior
-    if(options$modelSpecification == "BMA"){
-      labelPost <- "Averaged"
-    } else if(options$modelSpecification == "CRE"){
-      labelPost <- "Ordered"
-    }
-    
-    # Add fixed effects and random effects posteriors
+    x <- seq(-3, 3, .1)
+    df <- data.frame(x = c(x, x), y = c(mPrior(x), mPost(x)), g = rep(c("Prior", "Posterior"), each = length(x)))
     if(options$modelSpecification == "BMA" || options$modelSpecification == "CRE"){
       mPostFixed <- m$meta$fixed$posterior_d
       mPostRandom <- m$meta$random$posterior_d
-      
-      plot <- plot + ggplot2::stat_function(fun = mPostFixed, n = 1000, size = 1, ggplot2::aes(colour = "Fixed")) +
-        ggplot2::stat_function(fun = mPostRandom, n = 1000, size = 1, ggplot2::aes(colour = "Random")) +
-        ggplot2::scale_linetype_manual(values = c("solid", "dotted"), labels = c(labelPost, "Prior"))
+      df2 <- data.frame(x = c(x, x), y = c(mPostFixed(x), mPostRandom(x)), g = rep(c("Fixed", "Random"), each = length(x)))
+      df <- rbind(df, df2)
     }
     
+    plot <- PlotPriorAndPosterior(df)
+    # # Plot prior and posterior
+    # plot <- ggplot2::ggplot(df, ggplot2::aes(x)) +
+    #   ggplot2::stat_function(fun = mPost, n = 1000, size = 1, ggplot2::aes(linetype = "Posterior")) +
+    #   ggplot2::stat_function(fun = mPrior, n = 1000, size = 1, ggplot2::aes(linetype = "Prior")) +
+    #   ggplot2::scale_linetype_manual(values = c("solid", "dotted")) +
+    #   ggplot2::stat_function(fun = mPost, 
+    #                 xlim = int,
+    #                 geom = "area", alpha = 0.2, show.legend = F) +
+    #   # ggplot2::geom_segment(ggplot2::aes(x = e, xend = e, y = 0, yend = mPost(e)-.01), size = 0.5) +
+    #   ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
+    #   # ggplot2::geom_vline(ggplot2::aes(xintercept = mode(x))) + 
+    #   # theme_classic() +
+    #   # ggplot2::theme(legend.position = "top",
+    #   #       legend.spacing.x = ggplot2::unit(0.3, "cm"),
+    #   #       legend.title = ggplot2::element_blank()) +
+    #   ggplot2::labs(x = xlab, y = "Density") +
+    #   ggplot2::guides(colour = ggplot2::guide_legend(ncol=1,nrow=2,byrow=TRUE)) +
+    #   ggplot2::guides(linetype = ggplot2::guide_legend(ncol=1,nrow=2,byrow=TRUE)) +
+    #   ggplot2::xlim(xlim)
+    # 
+    # # Names for legend label posterior
+    # if(options$modelSpecification == "BMA"){
+    #   labelPost <- "Averaged"
+    # } else if(options$modelSpecification == "CRE"){
+    #   labelPost <- "Ordered"
+    # }
+    # 
+    # # Add fixed effects and random effects posteriors
+    # if(options$modelSpecification == "BMA" || options$modelSpecification == "CRE"){
+    #   mPostFixed <- m$meta$fixed$posterior_d
+    #   mPostRandom <- m$meta$random$posterior_d
+    #   
+    # if(type == "ES"){
+    #   plot <- plot + ggplot2::stat_function(fun = mPostFixed, n = 1000, size = 1, ggplot2::aes(colour = "Fixed"))
+    # }
+    #   plot <- plot +
+    #     ggplot2::stat_function(fun = mPostRandom, n = 1000, size = 1, ggplot2::aes(colour = "Random")) +
+    #     ggplot2::scale_linetype_manual(values = c("solid", "dotted"), labels = c(labelPost, "Prior"))
+    # }
+    
     # Add jasp theme to plot
-    plot <- themeJasp(plot, legend.position = "bottom", legend.title = "none")
+    # plot <- themeJasp(plot, legend.position = "bottom", legend.title = "none")
     postPlot$plotObject <- plot
     return()
   }
@@ -776,6 +796,14 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
     # Fill plot
     .fillForestPlot(forestPlot, jaspResults, dataset, options, studyLabels)
+    
+    
+    if(options$plotCumForest){
+      cumForestPlot <- createJaspPlot(plot = NULL, title = "Cumulative forest plot", height = height, width = width)
+      cumForestPlot$dependOn("plotCumForest")
+      .fillCumForest(cumForestPlot, jaspResults, dataset, options, studyLabels, dependencies)
+      forestContainer[["cumForestPlot"]] <- cumForestPlot
+    }
 
     
     # Add plot to container
@@ -836,23 +864,27 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                             "]",
                             sep = "")
 
-    # Get y values for the estimated points 
-    y <- seq(.6, length(varES) - .4, 1)
     }
     
+    # Get y values for the estimated points 
+    yEst <- rev(seq(.6, length(varES) - .4, 1))
     
     # Make index for model diamond
     if(options$modelSpecification == "CRE"){
       modelIndex <- "ordered"
-    } else {
+    } else if(options$modelSpecification == "BMA"){
       modelIndex <- "averaged"
-    }
+    } else if(options$modelSpecification == "FE"){
+      modelIndex <- "random"
+    } else modelIndex <- "fixed"
 
     # Create diamond for averaged or ordered model
     meanMain <- m$estimates[modelIndex, "mean"]
     lowerMain <- m$estimates[modelIndex, "2.5%"]
     upperMain <- m$estimates[modelIndex, "97.5%"]
-    yMain <- -1.5
+    if(modelIndex == "ordered") yMain <- -1
+    else if(options$modelSpecification == "BMA") yMain <- -1.5
+    else yMain <- -0.5
 
     d <- data.frame(x = c(lowerMain, meanMain,
                           upperMain, meanMain),
@@ -883,7 +915,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     meanRandom <- m$estimates["random", "mean"]
     lowerRandom <- m$estimates["random", "2.5%"]
     upperRandom <- m$estimates["random", "97.5%"]
-    yRandom <- -1
+    if(options$modelSpecification == "RE") yRandom <- 0.5
+    else if(options$modelSpecification == "BMA") yRandom <- -1
+    else if(options$modelSpecification == "CRE") yRandom <- -1.5
+    else yRandom <- 0
 
     d.random <- data.frame(x = c(lowerRandom, meanRandom,
                                  upperRandom, meanRandom),
@@ -935,6 +970,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     if(options$orderForest == "ascendingForest"){
       ord <- order(df$effectSize)
       df$y <- rev(ord)
+      yEst <- yEst[ord]
     } 
     #else if(options$orderForest == "labelForest") {df <- df[rev(rownames(df)), ]}
 
@@ -991,31 +1027,92 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     # lower_estimates <- lower_estimates[order]
     # upper_estimates <- upper_estimates[order]
     # Add estimates per study if both
-    # if(options$forestPlot == "plotForestBoth"){
-    #   plot <- plot +
-    #   # Estimated points with CI's
-    #   ggplot2::geom_point(ggplot2::aes(x = mean_estimates, y = y,
-    #              size = weight_estimated_scaled,
-    #              colour = "slategrey") +
-    #   ggplot2::geom_errorbarh(ggplot2::aes(xmin = lower_estimates, xmax = upper_estimates, y = y),
-    #                  colour = "slategrey", height = .1) +
-    #   # Add estimated axis labels
-    #   ggplot2::scale_y_continuous(breaks = c(as.numeric(reorder(df$studyLabels, -df$effectSize)),
-    #                                          yDiamond),
-    #                               labels = c(studyLabels, model),
-    #                               sec.axis = ggplot2::sec_axis(~ .,
-    #                                                            breaks = c(as.numeric(reorder(df$studyLabels, -df$effectSize)),
-    #                                                                       y,
-    #                                                                       yDiamond),
-    #                                                            labels = c(text_observed,
-    #                                                                       text_estimated,
-    #                                                                       textDiamond))) +
-    #   # Adjust colour of secondary axis
-    #   ggplot2::theme(axis.text.y.right = ggplot2::element_text(colour = c(rep(c("black", "slategrey"), each = nrow(df)), rep("black", 3))))
-    # }
+    if(options$forestPlot == "plotForestBoth"){
+      plot <- plot +
+      # Estimated points with CI's
+      ggplot2::geom_point(ggplot2::aes(x = mean_estimates, y = yEst),
+                 size = weight_estimated_scaled,
+                 colour = "slategrey") +
+      ggplot2::geom_errorbarh(ggplot2::aes(xmin = lower_estimates, xmax = upper_estimates, y = yEst),
+                     colour = "slategrey", height = .1) +
+      # Add estimated axis labels
+      ggplot2::scale_y_continuous(breaks = c(df$y,
+                                             yDiamond),
+                                  labels = c(as.character(df$studyLabels), model),
+                                  sec.axis = ggplot2::sec_axis(~ .,
+                                                               breaks = c(df$y,
+                                                                          yEst,
+                                                                          yDiamond),
+                                                               labels = c(text_observed,
+                                                                          text_estimated,
+                                                                          textDiamond))) +
+      # Adjust colour of secondary axis
+      ggplot2::theme(axis.text.y.right = ggplot2::element_text(colour = c(rep(c("black", "slategrey"), each = nrow(df)), rep("black", 3))))
+    }
 
     forestPlot$plotObject <- plot
     return()
+  }
+  
+  .fillCumForest <- function(cumForestPlot, jaspResults, dataset, options, studyLabels, dependencies){
+    meanMain <- 0
+    lowerMain <- 0
+    upperMain <- 0
+    for(i in 2:nrow(dataset)){
+      .bmaResults(jaspResults, dataset[1:i, ], options, dependencies)
+      m <- jaspResults[["bmaResults"]]$object
+      meanMain[i] <- m$estimates["averaged", "mean"]
+      lowerMain[i] <- m$estimates["averaged", "2.5%"]
+      upperMain[i] <- m$estimates["averaged", "97.5%"]
+    }
+    
+    text <- paste(sprintf('%.2f', meanMain),
+                           " [",
+                           sprintf('%.2f', lowerMain),
+                           ", ",
+                           sprintf('%.2f', upperMain),
+                           "]",
+                           sep = "")
+    
+    df <- data.frame(effectSize = meanMain, studyLabels = studyLabels, y = length(meanMain):1)
+    
+    
+    plot <-  ggplot2::ggplot(df,
+                              ggplot2::aes(x = effectSize,
+                                           y = y))+
+      # Add dotted vertical line at x = 0
+      ggplot2::geom_vline(xintercept = 0, linetype = "dotted")+
+      
+      # Add observed or estimated points with CI, and text
+      ggplot2::geom_point(shape = 16, size = 2) +
+      ggplot2::geom_errorbarh(ggplot2::aes(xmin = lowerMain, xmax = upperMain), height = .2) +
+      
+      # Name of x axis
+      ggplot2::xlab("Overall Effect Size") +
+      
+      ggplot2::scale_y_continuous(breaks = df$y,
+                                  labels = studyLabels,
+                                  sec.axis = ggplot2::sec_axis(~ .,
+                                                               breaks = df$y,
+                                                               labels = text))
+      
+    # Add jasp theme to plot
+    plot <- themeJasp(plot,
+                      yAxis = FALSE)
+    
+    # Add other theme elements (no y axis and aligning y axis labels)
+    plot <- plot +
+      ggplot2::theme(axis.title.y = ggplot2::element_blank(),
+                     axis.line.y = ggplot2::element_blank(),
+                     axis.ticks.y = ggplot2::element_blank(),
+                     axis.text.y = ggplot2::element_text(hjust = 0),
+                     axis.text.y.right = ggplot2::element_text(hjust = 1)
+      )
+    
+      
+    cumForestPlot$plotObject <- plot
+    return()
+      
   }
   
   .sequentialPlot <- function(jaspResults, dataset, options, ready, dependencies) {
@@ -1047,15 +1144,21 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     }
     df <- data.frame(x = 1:nrow(dataset), y = BFs)
     
-    # plot <- ggplot2::ggplot(df, ggplot2::aes(x, y)) +
-    #   ggplot2::geom_point(shape = 1, size = 2) +
-    #   ggplot2::xlab("BF")
-    # plot <- themeJasp(plot,
-                        # yAxis = FALSE)
-    plot <- PlotRobustnessSequential(dfLines = df
+    studyLabels <- paste("Study", 1:nrow(dataset))
+    
+    plot <- ggplot2::ggplot(df, ggplot2::aes(x, y)) +
+      ggplot2::geom_point(shape = 1, size = 3) +
+      ggplot2::scale_x_continuous(breaks = df$x,
+                                  labels = studyLabels) +
+      ggplot2::ylab("BF")
+      
+    plot <- themeJasp(plot)
+    plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60, hjust = 1),
+                                  axis.title.x = ggplot2::element_blank())
+    # plot <- PlotRobustnessSequential(dfLines = df
                                      # hasRightAxis = F, 
                                      # addEvidenceArrowText = F
-                                     )
+                                     # )
     plot + ggplot2::coord_flip()
     seqPlot$plotObject <- plot
     return()
