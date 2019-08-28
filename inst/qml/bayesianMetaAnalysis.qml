@@ -543,6 +543,11 @@ Group{
         }
         RadioButton
         {
+          name: "descendingForest"
+          label: qsTr("Descending")
+        }
+        RadioButton
+        {
           name: "labelForest"
           label: qsTr("Not ordered")
         }

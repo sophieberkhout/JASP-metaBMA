@@ -87,7 +87,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     study <- options[["studyLabels"]]
     if(varES == "") varES <- NULL
     if(varSE == "") varSE <- NULL
-    if(length(CI) == 0 || length(CI) == 1) {
+    if(CI[[1]] == ""  || CI[[2]] == "" || is.null(CI)) {
       lower <- NULL
       upper <- NULL
     }
@@ -671,7 +671,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     # Get prior and posterior functions, and 95% CI intervals
     mPostFixed <- m$meta$fixed$posterior_d
     mPostRandom <- m$meta$random$posterior_d
-    
+    alpha <- 0.2
     est <- m$estimates[1, 1]
     x <- seq(est - 10, est + 10, .001)
     postName <- "Posterior"
@@ -711,6 +711,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       xlim <- c(0, 3)
       valuesCol <- c("black", "black")
       valuesLine <- c("solid", "dotted")
+      alpha <- 0.3
     }
     # Make dataframe of prior and posterior functions
     # df <- data.frame(x = c(0, 1), l = c("Prior", "Posterior"))
@@ -742,16 +743,32 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       df <- rbind(df2, df)
     }
     
-    plot <- PlotPriorAndPosterior(df, xName = xlab)
+    #plot <- PlotPriorAndPosterior(df, xName = xlab)
+    
+    plot <- ggplot2::ggplot(data = df, mapping = ggplot2::aes(x = x, y = y, color = g, linetype = g)) +
+          JASPgraphs::geom_line() +
+          ggplot2::scale_x_continuous(xlab) +
+          ggplot2::scale_y_continuous("", breaks = JASPgraphs::getPrettyAxisBreaks(df$y))
+    
     plot <- plot + 
       # ggplot2::geom_area(mapping = ggplot2::aes(x = ifelse(x > int[1] & x < int[2] , x, 0)), fill = "red") +
-      ggplot2::geom_line(ggplot2::aes(colour = df$g)) +
-      ggplot2::scale_linetype_manual("test", values = valuesLine) +
-      ggplot2::scale_color_manual("test", values = valuesCol) +
+      #ggplot2::geom_line(ggplot2::aes(colour = df$g)) +
+      ggplot2::scale_linetype_manual("", values = valuesLine) +
+      ggplot2::scale_color_manual("", values = valuesCol) +
       ggplot2::stat_function(fun = mPost,
                     xlim = int,
-                    geom = "area", alpha = 0.1, show.legend = F) +
-      ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
+                    geom = "area", alpha = alpha, show.legend = F, size = 0, fill = "grey") +
+      ggplot2::geom_vline(xintercept = 0, linetype = "dotted") 
+    
+    xr   <- range(df$x)
+    idx  <- which.max(df$y)
+    xmax <- df$x[idx]
+    if (xmax > mean(xr)) {
+      legend.position = c(0.15, 0.875)
+    } else {
+      legend.position = c(0.80, 0.875)
+    }
+    plot <- JASPgraphs::themeJasp(plot, legend.position = legend.position)
     
    # plot <- plot + ggplot2::xlim(xlim)
 
@@ -1021,6 +1038,14 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       #df$y <- rev(ord)
       #df$y <- c(2, 7, 4, 10, 3, 6, 1, 9, 11, 5, 13, 8, 12)
       yEst <- yEst[rank(df$effectSize)]
+    } 
+    
+    if(options$orderForest == "descendingForest"){
+      ord <- rank(df$effectSize)
+      df$y <- ord
+      #df$y <- rev(ord)
+      #df$y <- c(2, 7, 4, 10, 3, 6, 1, 9, 11, 5, 13, 8, 12)
+      yEst <- yEst[(length(varES) + 1) - rank(df$effectSize)]
     } 
     #else if(options$orderForest == "labelForest") {df <- df[rev(rownames(df)), ]}
 
