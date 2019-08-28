@@ -669,46 +669,92 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     m <- jaspResults[["bmaResults"]]$object
 
     # Get prior and posterior functions, and 95% CI intervals
+    mPostFixed <- m$meta$fixed$posterior_d
+    mPostRandom <- m$meta$random$posterior_d
+    
+    est <- m$estimates[1, 1]
+    x <- seq(est - 10, est + 10, .001)
+    postName <- "Posterior"
     # Effect size priors
     if(type == "ES"){
       mPrior <- m$prior_d$fixed
-      xlab <- expression(eta)
+      xlab <- expression("Effect Size "*eta)
       xlim <- c(-4, 4)
+      valuesCol <- c("blue", "red", "black", "black")
+      valuesLine <- c("solid", "solid", "solid", "dotted")
+      postName <- "Averaged"
       if(options$modelSpecification == "BMA"){
         mPost <- m$posterior_d
         int <- c(m$estimates["averaged", "2.5%"], m$estimates["averaged", "97.5%"])
       } else if(options$modelSpecification == "RE"){
         mPost <- m$meta$random$posterior_d
         int <- c(m$estimates["random", "2.5%"], m$estimates["random", "97.5%"])
+        valuesCol <- c("black", "black")
+        valuesLine <- c("solid", "dotted")
       } else if(options$modelSpecification == "FE"){
         mPost <- m$meta$fixed$posterior_d
         int <- c(m$estimates["fixed", "2.5%"], m$estimates["fixed", "97.5%"])
+        valuesCol <- c("black", "black")
+        valuesLine <- c("solid", "dotted")
       } else if(options$modelSpecification == "CRE"){
         mPost <- m$posterior_d
         int <- c(m$estimates["ordered", "2.5%"], m$estimates["ordered", "97.5%"])
         xlim <- c(0, 4)
+        postName <- "Ordered"
       }
     # Heterogeneity priors
     } else if(type == "SE"){
       mPrior <- m$meta$random$prior_tau
       mPost <- m$meta$random$posterior_tau
       int <- c(m$meta$random$estimates["tau", "2.5%"], m$meta$random$estimates["tau", "97.5%"])
-      xlab <- expression(tau)
+      xlab <- expression("Heterogeneity "*tau)
       xlim <- c(0, 3)
+      valuesCol <- c("black", "black")
+      valuesLine <- c("solid", "dotted")
     }
     # Make dataframe of prior and posterior functions
-    df <- data.frame(x = c(0, 1), l = c("Prior", "Posterior"))
+    # df <- data.frame(x = c(0, 1), l = c("Prior", "Posterior"))
     
-    x <- seq(-3, 3, .1)
-    df <- data.frame(x = c(x, x), y = c(mPrior(x), mPost(x)), g = rep(c("Prior", "Posterior"), each = length(x)))
-    if(options$modelSpecification == "BMA" || options$modelSpecification == "CRE"){
+    test <- mPost(x)
+    # test <- test[test > 0.001]
+    x <- x[test > 0.00001]
+    x2 <- x
+    yPostSE <- mPostRandom(x)
+    g2 <- rep("Random", length(x))
+    
+    xlim <- c(min(x), max(x))
+    
+    if(type == "ES"){
+      x2 <- c(x, x)
+      yPostSE <- c(mPostFixed(x), mPostRandom(x))
+      g2 <- rep(c("Fixed", "Random"), each = length(x))
+      
+    }    
+    yPost <- mPost(x)
+    yPrior <- mPrior(x)
+
+      
+    df <- data.frame(x = c(x, x), y = c(mPrior(x), mPost(x)), g = rep(c("Prior", postName), each = length(x)))
+    if(type == "ES" && (options$modelSpecification == "BMA" || options$modelSpecification == "CRE")){
       mPostFixed <- m$meta$fixed$posterior_d
       mPostRandom <- m$meta$random$posterior_d
-      df2 <- data.frame(x = c(x, x), y = c(mPostFixed(x), mPostRandom(x)), g = rep(c("Fixed", "Random"), each = length(x)))
-      df <- rbind(df, df2)
+      df2 <- data.frame(x = x2, y = yPostSE, g = g2)
+      df <- rbind(df2, df)
     }
     
-    plot <- PlotPriorAndPosterior(df)
+    plot <- PlotPriorAndPosterior(df, xName = xlab)
+    plot <- plot + 
+      # ggplot2::geom_area(mapping = ggplot2::aes(x = ifelse(x > int[1] & x < int[2] , x, 0)), fill = "red") +
+      ggplot2::geom_line(ggplot2::aes(colour = df$g)) +
+      ggplot2::scale_linetype_manual("test", values = valuesLine) +
+      ggplot2::scale_color_manual("test", values = valuesCol) +
+      ggplot2::stat_function(fun = mPost,
+                    xlim = int,
+                    geom = "area", alpha = 0.1, show.legend = F) +
+      ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
+    
+   # plot <- plot + ggplot2::xlim(xlim)
+
     # # Plot prior and posterior
     # plot <- ggplot2::ggplot(df, ggplot2::aes(x)) +
     #   ggplot2::stat_function(fun = mPost, n = 1000, size = 1, ggplot2::aes(linetype = "Posterior")) +
@@ -866,8 +912,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 
     }
     
-    # Get y values for the estimated points 
-    yEst <- rev(seq(.6, length(varES) - .4, 1))
+
     
     # Make index for model diamond
     if(options$modelSpecification == "CRE"){
@@ -967,10 +1012,15 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       shape <- 19
     }
     
+    # Get y values for the estimated points 
+    yEst <- rev(seq(.6, length(varES) - .4, 1))
+    
     if(options$orderForest == "ascendingForest"){
-      ord <- order(df$effectSize)
-      df$y <- rev(ord)
-      yEst <- yEst[ord]
+      ord <- (length(varES) + 1) - rank(df$effectSize)
+      df$y <- ord
+      #df$y <- rev(ord)
+      #df$y <- c(2, 7, 4, 10, 3, 6, 1, 9, 11, 5, 13, 8, 12)
+      yEst <- yEst[rank(df$effectSize)]
     } 
     #else if(options$orderForest == "labelForest") {df <- df[rev(rownames(df)), ]}
 
@@ -1058,12 +1108,23 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     meanMain <- 0
     lowerMain <- 0
     upperMain <- 0
+    if(options$modelSpecification == "BMA"){
+      model <- "averaged"
+    } else if(options$modelSpecification == "RE"){
+      model <- "random"
+    } else if(options$modelSpecification == "FE"){
+      model <- "fixed"
+    } else {
+      model <- "ordered"
+    }
+    
+    
     for(i in 2:nrow(dataset)){
       .bmaResults(jaspResults, dataset[1:i, ], options, dependencies)
       m <- jaspResults[["bmaResults"]]$object
-      meanMain[i] <- m$estimates["averaged", "mean"]
-      lowerMain[i] <- m$estimates["averaged", "2.5%"]
-      upperMain[i] <- m$estimates["averaged", "97.5%"]
+      meanMain[i] <- m$estimates[model, "mean"]
+      lowerMain[i] <- m$estimates[model, "2.5%"]
+      upperMain[i] <- m$estimates[model, "97.5%"]
     }
     
     text <- paste(sprintf('%.2f', meanMain),
@@ -1084,7 +1145,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       ggplot2::geom_vline(xintercept = 0, linetype = "dotted")+
       
       # Add observed or estimated points with CI, and text
-      ggplot2::geom_point(shape = 16, size = 2) +
+      ggplot2::geom_point(shape = 16, size = 4) +
       ggplot2::geom_errorbarh(ggplot2::aes(xmin = lowerMain, xmax = upperMain), height = .2) +
       
       # Name of x axis

@@ -544,7 +544,7 @@ Group{
         RadioButton
         {
           name: "labelForest"
-          label: qsTr("By label")
+          label: qsTr("Not ordered")
         }
       }
     }
