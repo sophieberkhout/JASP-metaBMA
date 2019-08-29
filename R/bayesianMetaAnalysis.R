@@ -20,7 +20,7 @@
 BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Ready: variables needed for the analysis (confidence interval missing)
-  ready <- options[["effectSize"]] != "" && options[["standardError"]] != "" 
+  ready <- options[["effectSize"]] != "" && (options[["standardError"]] != "" || (all(unlist(options$confidenceInterval) != "")  && !is.null(unlist(options[["confidenceInterval"]])))) 
   
   # Dependencies: basically everyyhing
   dependencies <- c("effectSize", "standardError", "studyLabels", "modelSpecification",
@@ -187,9 +187,20 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     jaspResults[["bmaResults"]] <- bmaResults
     bmaResults$dependOn(dependencies)
     
+    varES <- options[["effectSize"]]
+
+    
     # Get necessary variables
     y <- dataset[, .v(options[["effectSize"]])]
-    SE <- dataset[, .v(options[["standardError"]])]
+    
+    if(all(unlist(options[["confidenceInterval"]]) != "") && !is.null(unlist(options[["confidenceInterval"]]))){
+      lower <- dataset[, .v(options$confidenceInterval[[1]][[1]])]
+      upper <- dataset[, .v(options$confidenceInterval[[1]][[2]])]
+      SE <- (upper - lower)/3.92
+    }
+    if(options$standardError != ""){
+      SE <- dataset[, .v(options[["standardError"]])]
+    }
     
     # if(options[["standardError"]] != ""){
     #   varSE <- dataset[, .v(options[["standardError"]])]
@@ -879,7 +890,15 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
     # Create effect size and standard error variable and make dataframe
     varES <- dataset[, .v(options[["effectSize"]])]
-    varSE <- dataset[, .v(options[["standardError"]])]
+    
+    if(all(unlist(options[["confidenceInterval"]]) != "") && !is.null(unlist(options[["confidenceInterval"]]))){
+      lower <- dataset[, .v(options[["confidenceInterval"]][[1]][[1]])]
+      upper <- dataset[, .v(options[["confidenceInterval"]][[1]][[2]])]
+      varSE <- (upper - lower)/3.92
+    }
+    if(options[["standardError"]] != ""){
+      varSE <- dataset[, .v(options[["standardError"]])]
+    }
 
     # Assign weights for the observed point sizes
     weight <- 1/varSE^2
