@@ -67,7 +67,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   }
   
   # Plot: Forest plot; only when checked
-  if(options$checkForestPlot){  
+  if(options$checkForestPlot || options$plotCumForest){  
     .forestPlot(jaspResults, dataset, options, ready, dependencies)
   }
   
@@ -506,12 +506,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       estimatedUpper <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "97.5%"]
     }
     
-    # if(options$modelSpecification == "CRE"){
-    #   estimatedES <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "mean"]
-    #   estimatedLower <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "2.5%"]
-    #   estimatedUpper <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "97.5%"]
-    # 
-    # }
+    if(options$modelSpecification == "CRE"){
+      estimatedES <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "mean"]
+      estimatedLower <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "2.5%"]
+      estimatedUpper <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "97.5%"]
+
+    }
 
     # Add studylabels when given, otherwise use "Study n"
     if(options[["studyLabels"]] != ""){
@@ -860,16 +860,21 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       title <- "Observed study effects"
     }
     
-    # Create empty plot
-    forestPlot <- createJaspPlot(plot = NULL, title = title, height = height, width = width)
-    
     # Check if ready    
     if(!ready){
       return()
     } 
     
-    # Fill plot
-    .fillForestPlot(forestPlot, jaspResults, dataset, options, studyLabels)
+    # Create empty plot
+    if(options$checkForestPlot){
+      forestPlot <- createJaspPlot(plot = NULL, title = title, height = height, width = width)
+      # Fill plot
+      .fillForestPlot(forestPlot, jaspResults, dataset, options, studyLabels)
+      # Add plot to container
+      forestContainer[["forestPlot"]] <- forestPlot
+    }
+    
+    
     
     
     if(options$plotCumForest){
@@ -880,8 +885,6 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     }
 
     
-    # Add plot to container
-    forestContainer[["forestPlot"]] <- forestPlot
   }
   
   .fillForestPlot <- function(forestPlot, jaspResults, dataset, options, studyLabels){
@@ -907,6 +910,11 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     # Assign weights for the estimated point sizes
     # Should be different for ordered analysis
     se_estimated <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "se_mean"]
+    
+    # if(options[["modelSpecification"]] == "CRE"){
+    #   se_estimated <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "se_mean"]
+    # }
+    
     weight_estimated <- 1 / se_estimated^2
     weight_estimated_scaled <- ((4 - 1) * (weight_estimated - min(weight_estimated))) / (
                                 max(weight_estimated) - min(weight_estimated)) + 2
@@ -929,9 +937,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       mean_estimates <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "mean"]
       lower_estimates <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "2.5%"]
       upper_estimates <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "97.5%"]
-     
+    } 
     # The estimates for the ordered analysis are not always saved
-    #   else if(options$modelSpecification == "CRE"){
+    # if(options$modelSpecification == "CRE"){
     #   mean_estimates <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[1:length(varES) + 2, "mean"]
     #   lower_estimates <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[1:length(varES) + 2, "2.5%"]
     #   upper_estimates <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[1:length(varES) + 2, "97.5%"]
@@ -946,7 +954,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                             "]",
                             sep = "")
 
-    }
+    
     
 
     
@@ -963,9 +971,11 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     meanMain <- m$estimates[modelIndex, "mean"]
     lowerMain <- m$estimates[modelIndex, "2.5%"]
     upperMain <- m$estimates[modelIndex, "97.5%"]
-    if(modelIndex == "ordered") yMain <- -1
-    else if(options$modelSpecification == "BMA") yMain <- -1.5
-    else yMain <- -0.5
+    if(modelIndex == "ordered"){
+      yMain <- -1
+    } else if(options$modelSpecification == "BMA"){
+      yMain <- -1.5
+    } else yMain <- -0.5
 
     d <- data.frame(x = c(lowerMain, meanMain,
                           upperMain, meanMain),
@@ -996,10 +1006,13 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     meanRandom <- m$estimates["random", "mean"]
     lowerRandom <- m$estimates["random", "2.5%"]
     upperRandom <- m$estimates["random", "97.5%"]
-    if(options$modelSpecification == "RE") yRandom <- 0.5
-    else if(options$modelSpecification == "BMA") yRandom <- -1
-    else if(options$modelSpecification == "CRE") yRandom <- -1.5
-    else yRandom <- 0
+    if(options$modelSpecification == "RE"){
+      yRandom <- 0.5
+    } else if(options$modelSpecification == "BMA"){
+      yRandom <- -1
+    } else if(options$modelSpecification == "CRE"){
+      yRandom <- -1.5
+    } else yRandom <- 0
 
     d.random <- data.frame(x = c(lowerRandom, meanRandom,
                                  upperRandom, meanRandom),
@@ -1249,22 +1262,22 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     }
     df <- data.frame(x = 1:nrow(dataset), y = BFs)
     
-    studyLabels <- paste("Study", 1:nrow(dataset))
+    # studyLabels <- paste("Study", 1:nrow(dataset))
     
-    plot <- ggplot2::ggplot(df, ggplot2::aes(x, y)) +
-      ggplot2::geom_point(shape = 1, size = 3) +
-      ggplot2::scale_x_continuous(breaks = df$x,
-                                  labels = studyLabels) +
-      ggplot2::ylab("BF")
+    # plot <- ggplot2::ggplot(df, ggplot2::aes(x, y)) +
+    #   ggplot2::geom_point(shape = 1, size = 3) +
+    #   ggplot2::scale_x_continuous(breaks = df$x,
+    #                               labels = studyLabels) +
+    #   ggplot2::ylab("BF")
       
-    plot <- themeJasp(plot)
-    plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60, hjust = 1),
-                                  axis.title.x = ggplot2::element_blank())
-    # plot <- PlotRobustnessSequential(dfLines = df
+    # plot <- themeJasp(plot)
+    # plot <- plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60, hjust = 1),
+    #                               axis.title.x = ggplot2::element_blank())
+    plot <- PlotRobustnessSequential(dfLines = df
                                      # hasRightAxis = F, 
                                      # addEvidenceArrowText = F
-                                     # )
-    plot + ggplot2::coord_flip()
+                                     )
+    # plot + ggplot2::coord_flip()
     seqPlot$plotObject <- plot
     return()
   }
