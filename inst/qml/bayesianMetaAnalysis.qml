@@ -207,7 +207,7 @@ Group
                   if(checkCRE.checked && checkPos.checked){false}
                   else {true}
                 }
-                defaultValue: 0
+              defaultValue: 0
                 max:
                 {
                   if(checkCRE.checked && checkNeg.checked){0}
@@ -237,7 +237,7 @@ Group
                   if(checkCRE.checked && checkPos.checked){false}
                   else {true}
                 }
-                defaultValue: 0
+              defaultValue: 0
                 max:
                 {
                   if(checkCRE.checked && checkNeg.checked){0}
@@ -293,7 +293,7 @@ Group
                   if(checkCRE.checked && checkPos.checked){false}
                   else {true}
                 }
-                defaultValue: 0
+              defaultValue: 0
                 max:
                 {
                   if(checkCRE.checked && checkNeg.checked){0}
@@ -319,7 +319,7 @@ Group
                   if(checkCRE.checked && checkPos.checked){false}
                   else {true}
                 }
-                defaultValue: 0
+              defaultValue: 0
                 max:
                 {
                   if(checkCRE.checked && checkNeg.checked){0}
@@ -386,7 +386,7 @@ Group
                   if(checkCRE.checked && checkPos.checked){false}
                   else {true}
                 }
-                defaultValue: 0
+              defaultValue: 0
                 max:
                 {
                   if(checkCRE.checked && checkNeg.checked){0}
@@ -412,7 +412,7 @@ Group
                   if(checkCRE.checked && checkPos.checked){false}
                   else {true}
                 }
-                defaultValue: 0
+              defaultValue: 0
                 max:
                 {
                   if(checkCRE.checked && checkNeg.checked){0}
