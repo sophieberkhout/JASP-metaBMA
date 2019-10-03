@@ -569,6 +569,11 @@ Group{
       name: "plotSequential"
       label: qsTr("Sequential plot")
       }
+      CheckBox
+      {
+      name: "plotSeqPM"
+      label: qsTr("Sequential plot PM")
+      }
     }
 //// End plots section ////
 
