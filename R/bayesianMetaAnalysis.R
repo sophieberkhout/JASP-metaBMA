@@ -1187,7 +1187,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                             y = y)) +
         ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
         ggplot2::geom_point(ggplot2::aes(shape = as.factor(dfBoth$g), colour = as.factor(dfBoth$g)), size = dfBoth$weight_scaled) +
-        ggplot2::geom_errorbarh(ggplot2::aes(xmin = dfBoth$lower, xmax = dfBoth$upper, colour = as.factor(dfBoth$g),), height = .1) +
+        ggplot2::geom_errorbarh(ggplot2::aes(xmin = dfBoth$lower, xmax = dfBoth$upper, colour = as.factor(dfBoth$g),), height = .1, show.legend = FALSE) +
         # Add estimated axis labels
         ggplot2::scale_y_continuous(breaks = c(df$y,
                                                yDiamond),
@@ -1199,9 +1199,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                                                  labels = c(text_observed,
                                                                             text_estimated,
                                                                             textDiamond))) +
-        ggplot2::scale_color_manual("", values = c("slategrey", "black"), labels = c("Observed", "Estimated")) +
-        ggplot2::scale_shape_manual("", values = c(16, 15), labels = c("Observed", "Estimated")) +
-        ggplot2::guides(colour = ggplot2::guide_legend(reverse=TRUE), shape = ggplot2::guide_legend(reverse=TRUE)) +
+        ggplot2::scale_color_manual("", values = c("slategrey", "black"), labels = c("Estimated", "Observed")) +
+        ggplot2::scale_shape_manual("", values = c(16, 15)) +
+        ggplot2::guides(shape = ggplot2::guide_legend(reverse=TRUE, override.aes = list(size=3)),
+                        colour = ggplot2::guide_legend(reverse=TRUE)) +
         # Adjust colour of secondary axis
         ggplot2::theme(axis.text.y.right = ggplot2::element_text(colour = c(rep(c("black", "slategrey"), each = nrow(df)), rep("black", 3)))) +
         ggplot2::xlab(expression("Effect size "*eta))
@@ -1219,7 +1220,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                      axis.ticks.y = ggplot2::element_blank(),
                      axis.text.y = ggplot2::element_text(hjust = 0),
                      axis.text.y.right = ggplot2::element_text(hjust = 1),
-                     legend.position = c(0, 1),
+                     legend.position = c(1, 1),
+                     legend.justification=c(0, 0),
+                     plot.margin = ggplot2::unit(c(5, 1, 0.5, 0.5), "lines"),
+                     legend.key.height = ,
                      legend.title = ggplot2::element_blank()
       )
 
@@ -1419,6 +1423,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   .fillSeqPM <- function(seqPMPlot, jaspResults, dataset, options, dependencies){
     n <- nrow(dataset)
     dfPMP <- data.frame(prob = 0, g = rep(c("FE0", "FE1", "RE0", "RE1"), each = n))
+    m <- jaspResults[["bmaResults"]]$object
+    pM <- m$prior_models
+    dfPMP[c(1, 1 + n, 1 + 2*n, 1 + 3*n), 1] <- pM
     startProgressbar(nrow(dataset)-1)
     for(i in 2:nrow(dataset)){
       .bmaResults(jaspResults, dataset[1:i, ], options, dependencies)
@@ -1435,13 +1442,32 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       progressbarTick()
     }
 
+    gridLines <- makeGridLines(x = 1,
+                               y = c(0.25, 0.5, 0.75),
+                               xend = nrow(dataset),
+                               colour = rep("gray", 3),
+                               linetype = rep("dashed", 3))
+    
     df <- data.frame(x = 1:nrow(dataset), y = dfPMP$prob, g = dfPMP$g)
     plot <- ggplot2::ggplot(df, ggplot2::aes(x = x, y = y, colour = g)) +
-      ggplot2::geom_line() +
-      ggplot2::scale_y_continuous(limits = c(0,1))
+      gridLines + 
+      ggplot2::geom_line(size = 1.5) +
+      ggplot2::scale_y_continuous(limits = c(0,1.25), breaks = c(0, .25, .5, .75, 1)) +
+      ggplot2::guides(colour = ggplot2::guide_legend(ncol = 2)) +
+      ggplot2::theme(legend.spacing.x = ggplot2::unit(0.35, 'cm')) +
+      ggplot2::labs(x = "n", y = "Posterior Model \n Probability") + 
+      ggplot2::scale_colour_manual(labels = c(expression("Fixed H"[0]),
+                                              expression("Fixed H"[1]),
+                                              expression("Random H"[0]),
+                                              expression("Random H"[1])),
+                                   values = c("aquamarine4", "aquamarine3", "darkorange4", "darkorange1"))
     # plot <- PlotRobustnessSequential(dfLines = df,
     #                                  lineColors = c("black", "grey", "red", "blue"),
     #                                  lineTypes = c("solid", "solid", "solid", "solid"))
+    
+    plot <- themeJasp(plot, legend.position = c(0.25, 1), legend.title = "none")
+    # plot <- plot + ggplot2::theme(axis.title.y = ggplot2::element_text(margin = ggplot2::unit(c(50,0,0,0), "cm")))
+    
     seqPMPlot$plotObject <- plot
     return()                              
   }
