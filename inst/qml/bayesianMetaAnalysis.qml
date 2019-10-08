@@ -125,6 +125,7 @@ Form
         }
       }
     }
+
 //// End analysis choices ////
 
 Group
@@ -147,6 +148,28 @@ Group
       label: qsTr("Effect sizes per study")
     }
 }
+RadioButtonGroup
+{
+  name: "BF"
+  title: qsTr("Bayes Factor")
+  RadioButton
+  {
+    value: "BF10"
+    label: qsTr("BF\u2081\u2080")
+    checked: true
+  }
+  RadioButton
+  {
+    value: "BF01"
+    label: qsTr("BF\u2080\u2081")
+  }
+  RadioButton
+  {
+    value: "logBF10"
+    label: qsTr("Log(BF\u2081\u2080)")
+  }
+}
+
 
 //// Priors ////
     Section
@@ -549,7 +572,7 @@ Group{
         RadioButton
         {
           name: "labelForest"
-          label: qsTr("Not ordered")
+          label: qsTr("Row order")
         }
       }
     }

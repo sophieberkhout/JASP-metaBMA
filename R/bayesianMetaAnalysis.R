@@ -413,7 +413,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
     if(options$modelSpecification == "BMA")
       bmaTable$addFootnote("Averaged over the fixed effects model and the random effects model.",
-                           colNames = "model", rowNames="row1") 
+                           colNames = "model", rowNames="row4") 
     if(options$modelSpecification == "CRE"){
       bmaTable$addFootnote(paste0("Bayes Factor of the constrained random effects H\u2081 versus the fixed effects H\u2080 model. The Bayes Factor for the ordered H\u2081 versus the unconstrained (random) effects H\u2081 model is ",
                                  round(m$BF["ordered", "random"], 3),
@@ -475,14 +475,6 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     row <- data.frame(model = model, priorProb =  priorProb, postProb = postProb)
     postTable$addRows(row)
     
-    if(options$modelSpecification == "BMA"){
-      postTable$addFootnote("Posterior probabilities from model averaging.",
-                          colNames = "postProb")
-    }
-    if(options$modelSpecification == "CRE"){
-      postTable$addFootnote("Posterior probabilities from the constrained random effects model.",
-                          colNames = "postProb")
-    }
   }
   
   # Table: Effect Sizes per Study
@@ -719,7 +711,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       mPrior <- m$prior_d$fixed
       xlab <- expression("Effect size "*eta)
       xlim <- c(-4, 4)
-      valuesCol <- c("aquamarine3", "darkorange1", "black", "black")
+      valuesCol <- c("#009E73", "#D55E00", "black", "black")
       valuesLine <- c("solid", "solid", "solid", "dotted")
       if(options$modelSpecification == "BMA"){
         mPost <- m$posterior_d
@@ -743,7 +735,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
         int <- c(m$estimates["ordered", "2.5%"], m$estimates["ordered", "97.5%"])
         xlim <- c(0, 4)
         postName <- "Ordered"
-        valuesCol <- c("aquamarine3", "black", "darkorange1", "black")
+        valuesCol <- c("#009E73", "black", "#D55E00", "black")
       }
     # Heterogeneity priors
     } else if(type == "SE"){
@@ -790,7 +782,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       df <- rbind(df2, df)
     }
     
-    if(type == "SE" && options$modelSpecification == "BMA") valuesCol <- c("darkorange1", "black")
+    if(type == "SE" && options$modelSpecification == "BMA") valuesCol <- c("#D55E00", "black")
     
     if(options$modelSpecification == "CRE" && type == "ES"){
       # df <- data.frame(x = c(x2, x2), 
@@ -807,7 +799,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                        y = c(mPrior(x), mPost(x), mPostRandom(x)), 
                        g = rep(c("Prior", "Ordered", "Random"), each = length(x)))
       df$g <- factor(df$g, levels = c("Ordered", "Random", "Prior"))
-      valuesCol <- c("black", "darkorange1", "black")
+      valuesCol <- c("black", "#D55E00", "black")
       valuesLine <- c("solid", "solid", "dotted")
     }
     
@@ -817,7 +809,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     plot <- ggplot2::ggplot(data = df, mapping = ggplot2::aes(x = x, y = y, color = g, linetype = g)) +
           JASPgraphs::geom_line() +
           ggplot2::scale_x_continuous(xlab, breaks = getPrettyAxisBreaks(df$x)) +
-          ggplot2::scale_y_continuous("", breaks = JASPgraphs::getPrettyAxisBreaks(df$y)) 
+          ggplot2::scale_y_continuous("Density", breaks = JASPgraphs::getPrettyAxisBreaks(df$y))
     
     plot <- plot + 
       # ggplot2::geom_area(mapping = ggplot2::aes(x = ifelse(x > int[1] & x < int[2] , x, 0)), fill = "darkorange1") +
@@ -827,14 +819,19 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       ggplot2::stat_function(fun = mPost,
                     xlim = int,
                     geom = "area", alpha = alpha, show.legend = F, size = 0, fill = "grey") +
-      ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
+      # ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
       ggplot2::theme(legend.text.align = 0)
+    
+    if(any(x == 0)){
+      plot <- plot + 
+        ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
+    }
     
     xr   <- range(df$x)
     idx  <- which.max(df$y)
     xmax <- df$x[idx]
     if (xmax > mean(xr)) {
-      legend.position = c(0.20, 0.875)
+      legend.position = c(0.2, 0.875)
     } else {
       legend.position = c(0.80, 0.875)
     }
@@ -1220,13 +1217,16 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                      axis.ticks.y = ggplot2::element_blank(),
                      axis.text.y = ggplot2::element_text(hjust = 0),
                      axis.text.y.right = ggplot2::element_text(hjust = 1),
-                     legend.position = c(1, 1),
-                     legend.justification=c(0, 0),
-                     plot.margin = ggplot2::unit(c(5, 1, 0.5, 0.5), "lines"),
-                     legend.key.height = ,
-                     legend.title = ggplot2::element_blank()
       )
 
+    if(options$forestPlot == "plotForestBoth"){
+      plot <- plot + ggplot2::theme(
+        legend.position = c(1, 1),
+        legend.justification=c(0, 0),
+        plot.margin = ggplot2::unit(c(5, 1, 0.5, 0.5), "lines"),
+        legend.title = ggplot2::element_blank()
+      )
+    }
     # Add the model diamond
     plot <- plot +
       ggplot2::geom_polygon(data = d, ggplot2::aes(x = x, y = y))
@@ -1422,6 +1422,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   .fillSeqPM <- function(seqPMPlot, jaspResults, dataset, options, dependencies){
     n <- nrow(dataset)
+    x <- 0:n
+    x <- x[-2]
     dfPMP <- data.frame(prob = 0, g = rep(c("FE0", "FE1", "RE0", "RE1"), each = n))
     m <- jaspResults[["bmaResults"]]$object
     pM <- m$prior_models
@@ -1441,18 +1443,19 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       }
       progressbarTick()
     }
-
-    gridLines <- makeGridLines(x = 1,
+    # xBreaks <- getPrettyAxisBreaks(x[-1])
+    gridLines <- makeGridLines(x = 0,
                                y = c(0.25, 0.5, 0.75),
                                xend = nrow(dataset),
                                colour = rep("gray", 3),
                                linetype = rep("dashed", 3))
     
-    df <- data.frame(x = 1:nrow(dataset), y = dfPMP$prob, g = dfPMP$g)
+    df <- data.frame(x = x, y = dfPMP$prob, g = dfPMP$g)
     plot <- ggplot2::ggplot(df, ggplot2::aes(x = x, y = y, colour = g)) +
       gridLines + 
       ggplot2::geom_line(size = 1.5) +
       ggplot2::scale_y_continuous(limits = c(0,1.25), breaks = c(0, .25, .5, .75, 1)) +
+      # ggplot2::scale_x_continuous(breaks = xBreaks) +
       ggplot2::guides(colour = ggplot2::guide_legend(ncol = 2)) +
       ggplot2::theme(legend.spacing.x = ggplot2::unit(0.35, 'cm')) +
       ggplot2::labs(x = "n", y = "Posterior Model \n Probability") + 
@@ -1460,12 +1463,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                               expression("Fixed H"[1]),
                                               expression("Random H"[0]),
                                               expression("Random H"[1])),
-                                   values = c("aquamarine4", "aquamarine3", "darkorange4", "darkorange1"))
+                                   values = c("#56B4E9", "#009E73", "#CC79A7", "#D55E00"))
     # plot <- PlotRobustnessSequential(dfLines = df,
     #                                  lineColors = c("black", "grey", "red", "blue"),
     #                                  lineTypes = c("solid", "solid", "solid", "solid"))
     
-    plot <- themeJasp(plot, legend.position = c(0.25, 1), legend.title = "none")
+    plot <- themeJasp(plot, legend.position = c(0.7, 1), legend.title = "none")
     # plot <- plot + ggplot2::theme(axis.title.y = ggplot2::element_text(margin = ggplot2::unit(c(50,0,0,0), "cm")))
     
     seqPMPlot$plotObject <- plot
