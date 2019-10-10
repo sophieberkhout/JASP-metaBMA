@@ -816,9 +816,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       #ggplot2::geom_line(ggplot2::aes(colour = df$g)) +
       ggplot2::scale_linetype_manual("", values = valuesLine, labels = labelsModel) +
       ggplot2::scale_color_manual("", values = valuesCol, labels = labelsModel) +
-      ggplot2::stat_function(fun = mPost,
-                    xlim = int,
-                    geom = "area", alpha = alpha, show.legend = F, size = 0, fill = "grey") +
+      # ggplot2::stat_function(fun = mPost,
+      #               xlim = int,
+      #               geom = "area", alpha = alpha, show.legend = F, size = 0, fill = "grey") +
       # ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
       ggplot2::theme(legend.text.align = 0)
     
@@ -888,10 +888,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   # Plot: Forest plot
   .forestPlot <- function(jaspResults, dataset, options, ready, dependencies) {
     forestContainer <- createJaspContainer(title = "Forest Plot")
-    forestContainer$dependOn(c(dependencies,
-                               "plotForestObserved", "plotForestEstimated", "plotForestBoth", 
-                               "checkForestPlot", "ascendingForest", "labelForest",
-                               "orderForest"))
+    forestContainer$dependOn(dependencies)
     jaspResults[["forestContainer"]] <- forestContainer
     jaspResults[["forestContainer"]]$position <- 6
     
@@ -925,6 +922,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     if(options$checkForestPlot){
       forestPlot <- createJaspPlot(plot = NULL, title = title, height = height, width = width)
       # Fill plot
+      forestPlot$dependOn(c("plotForestObserved", "plotForestEstimated", "plotForestBoth", 
+                            "checkForestPlot", "ascendingForest", "labelForest",
+                            "orderForest"))
       .fillForestPlot(forestPlot, jaspResults, dataset, options, studyLabels)
       # Add plot to container
       forestContainer[["forestPlot"]] <- forestPlot
@@ -1289,6 +1289,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                            "]",
                            sep = "")
     
+    studyLabels[2] <- paste(studyLabels[1], "\n &", studyLabels[2])
+    studyLabels <- paste("+", studyLabels)
+    studyLabels[1] <- "Prior"
+    
     df <- data.frame(effectSize = meanMain, studyLabels = studyLabels, y = length(meanMain):1)
     
     
@@ -1332,7 +1336,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   .sequentialPlot <- function(jaspResults, dataset, options, ready, dependencies) {
     # Create empty plot
-    seqContainer <- createJaspContainer(title = "Sequential Plot")
+    seqContainer <- createJaspContainer(title = "Sequential Analysis")
     seqContainer$dependOn(dependencies)
     jaspResults[["seqContainer"]] <- seqContainer
     jaspResults[["seqContainer"]]$position <- 6
@@ -1345,14 +1349,14 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
     # Fill posterior plot effect size
     if(options$plotSequential){
-      seqPlot <- createJaspPlot(plot = NULL, title = "Sequential Analysis", width = 600, height = 300)
+      seqPlot <- createJaspPlot(plot = NULL, title = "Bayes factors", width = 600, height = 300)
       seqPlot$dependOn("plotSequential")   
       seqContainer[["seqPlot"]] <- seqPlot
       .fillSeqPlot(seqPlot, jaspResults, dataset, options, dependencies)
     }
     
     if(options$plotSeqPM){
-      seqPMPlot <- createJaspPlot(plot = NULL, title = "Seq PM plot", height = 300, width = 600)
+      seqPMPlot <- createJaspPlot(plot = NULL, title = "Posterior model probabilities", height = 300, width = 600)
       seqPMPlot$dependOn("plotSeqPM")
       .fillSeqPM(seqPMPlot, jaspResults, dataset, options, dependencies)
       seqContainer[["seqPMPlot"]] <- seqPMPlot
@@ -1409,6 +1413,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                      plotLineOrPoint = "point",
                                      # pointLegend = TRUE,
                                      xName = "Number of Studies",
+                                     bfType = "BF10"
                                      # pointColors = c("aquamarine3", "darkorange1", "black")
                                      # hasRightAxis = F, 
                                      # addEvidenceArrowText = F

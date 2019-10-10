@@ -12,6 +12,7 @@
 
 <meta name="author" content="Sophie Berkhout" />
 
+<meta name="date" content="2019-10-11" />
 
 <title>Handout ResMas Poster Conference</title>
 
@@ -179,13 +180,952 @@ summary {
 
 <h1 class="title toc-ignore">Handout ResMas Poster Conference</h1>
 <h4 class="author">Sophie Berkhout</h4>
-<h4 class="date">8 October 2019</h4>
+<h4 class="date">11 October 2019</h4>
 
 </div>
 
 
-<p>test</p>
-<p>test verandering</p>
+<div id="references" class="section level1">
+<h1>References</h1>
+<p>Colonnesi, C., Stamsa, G. J., Kostera, I., &amp; Noomb, M. J. (2010). The relation between pointing and language development: A meta-analysis. Developmental Review, 30, 352-366. <a href="https://doi.org/10.1016/j.dr.2010.10.001" class="uri">https://doi.org/10.1016/j.dr.2010.10.001</a></p>
+<p>Quentin F. Gronau, Sara Van Erp, Daniel W. Heck, Joseph Cesario, Kai J. Jonas &amp; Eric-Jan Wagenmakers (2017) A Bayesian model-averaged meta-analysis of the power pose effect with informed and default priors: the case of felt power, Comprehensive Results in Social Psychology, 2:1, 123-138. <a href="https://doi.org/10.1080/23743603.2017.1326760" class="uri">https://doi.org/10.1080/23743603.2017.1326760</a></p>
+<p>Heck, D. W., Gronau, Q. F., &amp; Wagenmakers, E.-J. (2017). metaBMA: Bayesian model averaging for random and fixed effects meta-analysis. Retrieved from <a href="https://github.com/danheck/metaBMA" class="uri">https://github.com/danheck/metaBMA</a>. <a href="https://doi.org/10.5281/zenodo.835494" class="uri">https://doi.org/10.5281/zenodo.835494</a></p>
+<p>Rouder, J. N., Haaf, J. M., Davis-Stober, C. P., &amp; Hilgard, J. (2019). Beyond overall effects: A Bayesian approach to finding constraints in meta-analysis. Psychological Methods, 24(5), 606-621. <a href="https://doi.org/10.1037/met0000216" class="uri">https://doi.org/10.1037/met0000216</a></p>
+<p><i>Special thanks to Julia Haaf, Quentin Gronau, and Daniel Heck for their help on this project.</i></p>
+<div id="bayesian-meta-analysis" class="section level2">
+<h2>Bayesian Meta-Analysis</h2>
+<table style="width:100%;">
+<colgroup>
+<col width="50%"></col>
+<col width="49%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th>The fixed-effects model H<sub>0</sub></th>
+<th>The fixed-effects model H<sub>a</sub></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>This is the null hypothesis for the fixed-effects model. According to this model, there is one true effect size that is equal to zero, and all relevant studies should also indicate that there is no effect (any observed differences in effect size are due to sampling error).</td>
+<td>The alternative hypothesis of the fixed-effects model assumes that there is one true effect, and that all studies share that exact same effect size.</td>
+</tr>
+</tbody>
+</table>
+<table style="width:100%;">
+<colgroup>
+<col width="50%"></col>
+<col width="49%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th>The random-effects model H<sub>0</sub></th>
+<th>The random-effects model H<sub>a</sub></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Oppositely, the random-effects model does not assume one true common effect size for all studies. The null hypothesis following the random-effects model states that <i>on average</i> there is no effect. However, it allows the effect sizes of the individual studies to vary.</td>
+<td>The random-effects alternative hypothesis supposes that on average there is an effect, and that the observed effect sizes vary across studies.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="bayesian-advantages" class="section level2">
+<h2>Bayesian Advantages</h2>
+<p><strong>First of all</strong>, it allows for the quantification of evidence for or against hypotheses; it determines to what degree the data support a certain hypothesis over another. In contrast, a frequentist meta-analysis cannot make a claim about which hypothesis is best supported by the data.</p>
+<p><strong>Second,</strong> Bayesian meta-analyses can do effect size estimation on individual studies. It estimates the effect sizes per study by taking the other studies into account. This way, we get shrunk estimates (the variance is smaller).</p>
+<p><strong>Third,</strong> the Bayesian method allows to track evidence over time. Sequential analyses of Bayes factors and posterior model probabilities provide an overview of how the evidence develops as new studies are added. This is not possible with the frequentist analysis.</p>
+<p><strong>Finally,</strong> when the decision between a fixed-effects or a random-effects model is not clear (e.g., when the sample size is small), the Bayesian meta-analysis offers a model-averaged estimate to take all models into account when making inferences. The frequentist meta-analysis, however, does not provide such an average estimate.</p>
+</div>
+</div>
+<div id="full-output" class="section level1">
+<h1>Full Output</h1>
+<pre class="r"><code>htmltools::includeHTML(&quot;C:/Users/sophi/surfdrive/Stage JASP - Copy/JASPoutput.html&quot;)</code></pre>
+<!DOCTYPE html>
+<!-- saved from url=(0072)file:///C:/Users/sophi/surfdrive/Stage%20JASP%20-%20Copy/testoutput.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		
+		<title>JASP</title>		<style>			p {margin-top:1em; margin-bottom:1em;}			body {font-family: sans-serif;}		</style>	</head>
+	<body style="display: block; padding: 0px; margin: 0px; ">
+<div style="display:inline-block"><div style="padding: 0px; text-align: start; margin-bottom: 0px; margin-top: 0px; margin-left: 0px; margin-right: 0px; display: block; float: none; position: static; ">
+<div style="display:inline-block; ">
+<div style="padding: 0px; margin: 0px 20.4px; display: block; float: none; "><h1 style="padding: 0px; text-align: start; margin: 14.07px 0px; display: inline-block; float: none; vertical-align: middle; font-size: 21px; font: normal normal 700 normal 21px / normal sans-serif; font-weight: 700; color: rgb(0, 0, 0); ">Results</h1></div><div style="padding: 0px 12px 12px; text-align: start; margin-bottom: 8.4px; margin-top: 0px; margin-left: 8.4px; margin-right: 8.4px; display: block; float: none; position: relative; ">
+<div style="display:inline-block; ">
+<div style="padding: 0px; margin: 0px; display: block; float: none; "><h2 style="padding: 0px; text-align: start; margin: 14.94px 0px; display: inline-block; float: none; vertical-align: middle; font-size: 18px; font: normal normal 700 normal 18px / normal sans-serif; font-weight: 700; color: rgb(0, 0, 0); ">Bayesian Meta Analysis</h2></div><div style="padding: 0px 7.2px 0px 0px; text-align: start; margin-bottom: 7.2px; margin-top: 1.2px; margin-left: 0px; margin-right: 7.2px; display: block; float: none; position: static; ">
+<div style="display:inline-block; ">
+<div>
+	<table style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(128, 128, 128); border-style: none; padding: 0px; text-align: start; margin-bottom: 24px; margin-top: 0px; display: table; float: none; color: rgb(0, 0, 0); ">
+		<thead>
+			<tr>
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 6px 10px 6px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="14">
+					<div>
+						<div>
+							<span style="padding: 0px; text-align: left; margin: 0px; display: inline-block; float: none; vertical-align: middle; font-size: 12px; font: normal normal 400 normal 12px / normal sans-serif; font-weight: 400; color: rgb(0, 0, 0); ">
+							Posterior Model Estimates
+							</span>
+
+							<div></div>
+
+							<div></div>
+						</div>
+					</div>
+				</th>
+			</tr>
+
+			<tr>
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 3px 1px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="8"></th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 1px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="4">
+				95% CI
+				</th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2"></th>
+			</tr>
+
+			<tr>
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				&nbsp;
+				</th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				&nbsp;
+				</th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				Mean
+				</th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				SD
+				</th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				Lower
+				</th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				Upper
+				</th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				BFââ
+				</th>
+			</tr>
+		</thead>
+
+		<tbody>
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Fixed effects
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Î·
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.583
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.060
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.466
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.701
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				6.178eâ+19
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Random effects
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Î·
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.573
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.076
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.417
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.721
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				18321.557
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				&nbsp;
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Ï
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.131
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.071
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.037
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.299
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.646
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Averaged
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				áµ
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Î·
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.577
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.066
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.438
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.705
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				46668.217
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				&nbsp;
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Ï
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 1.99653px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 1px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="14"></td>
+			</tr>
+		</tbody>
+
+		<tfoot>
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="14">
+				áµ&nbsp;Averaged over the fixed effects model and the random effects model.
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+</div>
+</div></div><div style="padding: 0px 7.2px 0px 0px; text-align: start; margin-bottom: 7.2px; margin-top: 7.2px; margin-left: 0px; margin-right: 7.2px; display: block; float: none; position: static; ">
+<div style="display:inline-block; ">
+<div>
+	<table style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(128, 128, 128); border-style: none; padding: 0px; text-align: start; margin-bottom: 24px; margin-top: 0px; display: table; float: none; color: rgb(0, 0, 0); ">
+		<thead>
+			<tr>
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 6px 10px 6px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="6">
+					<div>
+						<div>
+							<span style="padding: 0px; text-align: left; margin: 0px; display: inline-block; float: none; vertical-align: middle; font-size: 12px; font: normal normal 400 normal 12px / normal sans-serif; font-weight: 400; color: rgb(0, 0, 0); ">
+							Model Probabilities
+							</span>
+
+							<div></div>
+
+							<div></div>
+						</div>
+					</div>
+				</th>
+			</tr>
+
+			<tr>
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				&nbsp;
+				</th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				Prior
+				</th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				Posterior
+				</th>
+			</tr>
+		</thead>
+
+		<tbody>
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Fixed Hâ
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.250
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				9.831eâ-21
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Fixed Hâ
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.250
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.607
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Random Hâ
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.250
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				2.143eâ
+
+
+				-5
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Random Hâ
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.250
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.393
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 1.99653px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 1px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="6"></td>
+			</tr>
+		</tbody>
+
+		<tfoot></tfoot>
+	</table>
+</div>
+</div></div><div style="padding: 0px 7.2px 0px 0px; text-align: start; margin-bottom: 7.2px; margin-top: 7.2px; margin-left: 0px; margin-right: 7.2px; display: block; float: none; position: static; ">
+<div style="display:inline-block; ">
+<div>
+	<table style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(128, 128, 128); border-style: none; padding: 0px; text-align: start; margin-bottom: 24px; margin-top: 0px; display: table; float: none; color: rgb(0, 0, 0); ">
+		<thead>
+			<tr>
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 6px 10px 6px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="10">
+					<div>
+						<div>
+							<span style="padding: 0px; text-align: left; margin: 0px; display: inline-block; float: none; vertical-align: middle; font-size: 12px; font: normal normal 400 normal 12px / normal sans-serif; font-weight: 400; color: rgb(0, 0, 0); ">
+							Effect Sizes per Study
+							</span>
+
+							<div></div>
+
+							<div></div>
+						</div>
+					</div>
+				</th>
+			</tr>
+
+			<tr>
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 3px 1px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="4"></th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 1px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="6">
+				Estimated
+				</th>
+			</tr>
+
+			<tr>
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				&nbsp;
+				</th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				Observed
+				</th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				Meanáµ
+				</th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				Loweráµ
+				</th>
+
+				<th style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0.925926px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 3px 12px; text-align: center; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="2">
+				Upperáµ
+				</th>
+			</tr>
+		</thead>
+
+		<tbody>
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Bates et al. (1979)
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.255
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.489
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.182
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.715
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 10.8px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Dobrich and Scarborough (1984)
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.424
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.539
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.248
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.779
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Fasolo &amp; dOdorico (2002)
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.536
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.562
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.338
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.770
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Franco &amp; Gagliano (2001)
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.908
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.681
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.454
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.969
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Harris et al. (1995)
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.867
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.590
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.283
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.898
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Locke (2007)
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				1.157
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.636
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.360
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.997
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Morales et al. (2000)
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.549
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.567
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.303
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.823
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Mundy and Gomes (1998)
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.332
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.513
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.209
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.739
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Murphy (1978)
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.321
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.494
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.212
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.715
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Rodrigo et al. (2006)
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.563
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.569
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.257
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.864
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Rowe (2000)
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.758
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.644
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.442
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.886
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				Rowe &amp; Goldin-Meadow (2008)
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.709
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.631
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.432
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 0px 1px 12px; text-align: right; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); ">
+				0.863
+				</td>
+
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px 12px 1px 0px; text-align: left; margin: 0px 0px 9.6px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); "></td>
+			</tr>
+
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 1.99653px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none none solid; padding: 1px; text-align: right; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="10"></td>
+			</tr>
+		</tbody>
+
+		<tfoot>
+			<tr>
+				<td style="border-collapse: collapse; border-top-width: 0px; border-bottom-width: 0px; border-left-width: 0px; border-right-width: 0px; border-color: rgb(0, 0, 0); border-style: none; padding: 1px; text-align: left; margin: 0px; display: table-cell; float: none; font-size: 12px; font-weight: 400; font: normal normal 400 normal 12px / normal sans-serif; color: rgb(0, 0, 0); " colspan="10">
+				áµ&nbsp;Posterior mean and 95% CI estimates from the random effects model.
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+</div>
+</div></div></div></div></div></div></div>	
+</body></html>
+</div>
 
 
 

@@ -590,12 +590,12 @@ Group{
       CheckBox
       {
       name: "plotSequential"
-      label: qsTr("Sequential plot")
+      label: qsTr("Sequential plot Bayes factors")
       }
       CheckBox
       {
       name: "plotSeqPM"
-      label: qsTr("Sequential plot PM")
+      label: qsTr("Sequential plot posterior model probabilities")
       }
     }
 //// End plots section ////

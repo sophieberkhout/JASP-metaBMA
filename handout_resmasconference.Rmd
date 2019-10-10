@@ -1,10 +1,40 @@
 ---
 title: "Handout ResMas Poster Conference"
 author: "Sophie Berkhout"
-date: "8 October 2019"
+date: "11 October 2019"
 output: html_document
 ---
+# References
+Colonnesi, C., Stamsa, G. J., Kostera, I., & Noomb, M. J. (2010). The relation between pointing and language development: A meta-analysis. Developmental Review, 30, 352-366. https://doi.org/10.1016/j.dr.2010.10.001
 
-test
+Quentin F. Gronau, Sara Van Erp, Daniel W. Heck, Joseph Cesario, Kai J. Jonas & Eric-Jan Wagenmakers (2017) A Bayesian model-averaged meta-analysis of the power pose effect with informed and default priors: the case of felt power, Comprehensive Results in Social Psychology, 2:1, 123-138. https://doi.org/10.1080/23743603.2017.1326760
 
-test verandering
+Heck, D. W., Gronau, Q. F., & Wagenmakers, E.-J. (2017). metaBMA: Bayesian model averaging for random and fixed effects meta-analysis. Retrieved from https://github.com/danheck/metaBMA. https://doi.org/10.5281/zenodo.835494
+
+Rouder, J. N., Haaf, J. M., Davis-Stober, C. P., & Hilgard, J. (2019). Beyond overall effects: A Bayesian approach to finding constraints in meta-analysis. Psychological Methods, 24(5), 606-621. https://doi.org/10.1037/met0000216
+
+<i>Special thanks to Julia Haaf, Quentin Gronau, and Daniel Heck for their help on this project.</i>
+
+## Bayesian Meta-Analysis
+
+| The fixed-effects model H<sub>0</sub> | The fixed-effects model H<sub>a</sub>|
+|---------------------------------------|--------------------------------------|
+|This is the null hypothesis for the fixed-effects model. According to this model, there is one true effect size that is equal to zero, and all relevant studies should also indicate that there is no effect (any observed differences in effect size are due to sampling error).| The alternative hypothesis of the fixed-effects model assumes that there is one true effect, and that all studies share that exact same effect size.|
+
+|The random-effects model H<sub>0</sub> | The random-effects model H<sub>a</sub> |
+|---------------------------------------|--------------------------------------|
+| Oppositely, the random-effects model does not assume one true common effect size for all studies. The null hypothesis following the random-effects model states that <i>on average</i> there is no effect. However, it allows the effect sizes of the individual studies to vary. | The random-effects alternative hypothesis supposes that on average there is an effect, and that the observed effect sizes vary across studies. |
+
+## Bayesian Advantages
+<strong>First of all</strong>, it allows for the quantification of evidence for or against hypotheses; it determines to what degree the data support a certain hypothesis over another. In contrast, a frequentist meta-analysis cannot make a claim about which hypothesis is best supported by the data. 
+
+<strong>Second,</strong> Bayesian meta-analyses can do effect size estimation on individual studies. It estimates the effect sizes per study by taking the other studies into account. This way, we get shrunk estimates (the variance is smaller).
+
+<strong>Third,</strong> the Bayesian method allows to track evidence over time. Sequential analyses of Bayes factors and posterior model probabilities provide an overview of how the evidence develops as new studies are added. This is not possible with the frequentist analysis. 
+
+<strong>Finally,</strong> when the decision between a fixed-effects or a random-effects model is not clear (e.g., when the sample size is small), the Bayesian meta-analysis offers a model-averaged estimate to take all models into account when making inferences. The frequentist meta-analysis, however, does not provide such an average estimate. 
+
+# Full Output
+```{r}
+htmltools::includeHTML("C:/Users/sophi/surfdrive/Stage JASP - Copy/JASPoutput.html")
+```
