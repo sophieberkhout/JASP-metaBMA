@@ -28,7 +28,7 @@ Rouder, J. N., Haaf, J. M., Davis-Stober, C. P., & Hilgard, J. (2019). Beyond ov
 </font>
 
 ### Full Output
-To see all the results, click [here](https://htmlpreview.github.io/?https://github.com/sophieberkhout/JASP-metaBMA/blob/master/pointing%20results.html){target="_blank"}. (It may take a while to load as there are many plots)
+To see all the results from JASP, click [here](https://htmlpreview.github.io/?https://github.com/sophieberkhout/JASP-metaBMA/blob/master/pointing%20results.html){target="_blank"}. 
 
 ### Bayesian Meta-Analysis Models
 
