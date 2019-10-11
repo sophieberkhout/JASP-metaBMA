@@ -45,3 +45,7 @@ When you are not interested in distinguishing between the fixed-effects and the 
 
 ##### Constrained Random (Ordered) Effects
 Sometimes you are completely certain that an effect must be positive or must be negative. If that is the case, you can do a constrained random effects analysis. Here, you restrict the effect sizes to show one direction only.
+
+### Download poster
+[![poster](C:/Users/sophi/surfdrive/Stage JASP - Copy/posterconferenceCorrect.png){width="10%"}](https://github.com/sophieberkhout/JASP-metaBMA/raw/master/poster_JASP_sophieberkhout.pdf)
+(1 MB)
