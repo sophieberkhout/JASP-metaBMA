@@ -6,9 +6,9 @@ author:
 date: "11 October"
 output: html_document
 ---
-![](https://www.uva.nl/binaries/_ht_1561017307337/large/content/gallery/subsites/extranet/huisstijl/logo-regular.jpg){width="35%"}
+![](https://www.uva.nl/binaries/_ht_1561017307337/large/content/gallery/subsites/extranet/huisstijl/logo-regular.jpg){width="44%"}
 
-![](C:/Users/sophi/surfdrive/Stage JASP - Copy/JASP Media Kit/Current/green_logo_dark_text.png){width="13%"}
+![](C:/Users/sophi/surfdrive/Stage JASP - Copy/JASP Media Kit/Current/green_logo_dark_text.png){width="18%"}
 
 ### Contact
 If you have any questions or comments, feel free to e-mail me at
@@ -47,5 +47,5 @@ When you are not interested in distinguishing between the fixed-effects and the 
 Sometimes you are completely certain that an effect must be positive or must be negative. If that is the case, you can do a constrained random effects analysis. Here, you restrict the effect sizes to show one direction only.
 
 ### Download poster
-[![poster](C:/Users/sophi/surfdrive/Stage JASP - Copy/posterconferenceCorrect.png){width="10%"}](https://github.com/sophieberkhout/JASP-metaBMA/raw/master/poster_JASP_sophieberkhout.pdf)
+[![poster](C:/Users/sophi/surfdrive/Stage JASP - Copy/posterconferenceCorrect.png){width="20%"}](https://github.com/sophieberkhout/JASP-metaBMA/raw/master/poster_JASP_sophieberkhout.pdf)
 (1 MB)
