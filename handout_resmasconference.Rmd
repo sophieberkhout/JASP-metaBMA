@@ -29,13 +29,13 @@ Rouder, J. N., Haaf, J. M., Davis-Stober, C. P., & Hilgard, J. (2019). Beyond ov
 
 ### Bayesian Meta-Analysis Models
 
-| Fixed-effects H<sub>0</sub> | |Fixed-effects H<sub>a</sub>|
+|Fixed-effects H<sub>0</sub>| |Fixed-effects H<sub>a</sub>|
 |---------------------------------------|---|--------------------------------------|
 |There is one true effect size that is equal to zero, and any observed differences in effect size per study are due to sampling error.| | There is one true effect, and all studies share that exact same effect size.|
 
-|Random-effects H<sub>0</sub> || Random-effects H<sub>a</sub> |
+|Random-effects H<sub>0</sub>| |Random-effects H<sub>a</sub>|
 |---------------------------------------|---|--------------------------------------|
-| On average there is no effect. but effect sizes of individual studies van vary. H | | On average there is an effect, and the observed effect sizes vary across studies. |
+| On average there is no effect. but effect sizes of individual studies van vary.  | | On average there is an effect, and the observed effect sizes vary across studies. |
 
 ##### Bayesian Model Averaging
 When you are not interested in distinguishing between the fixed-effects and the random-effects model, you can do a Bayesian model averaged meta-analysis (which is used in the example). This analysis calculates average estimates between the two models.
@@ -44,6 +44,6 @@ When you are not interested in distinguishing between the fixed-effects and the 
 Sometimes you are completely certain that an effect must be positive or must be negative. If that is the case, you can do a constrained random effects analysis. Here, you restrict the effect sizes to show one direction only.
 
 ### Full Output
-```{r echo = F, results='asis'}
+```{r echo = F, results='asis', out.width='50%'}
 htmltools::includeHTML("https://github.com/sophieberkhout/JASP-metaBMA/raw/master/pointing%20results.html")
 ```
