@@ -27,6 +27,9 @@ Rouder, J. N., Haaf, J. M., Davis-Stober, C. P., & Hilgard, J. (2019). Beyond ov
 <i>Special thanks to Julia Haaf, Quentin Gronau, and Daniel Heck for their help on this project.</i>
 </font>
 
+### Full Output
+To see all the results, click [here](https://htmlpreview.github.io/?https://github.com/sophieberkhout/JASP-metaBMA/blob/master/pointing%20results.html){target="_blank"}. (It may take a while to load as there are many plots)
+
 ### Bayesian Meta-Analysis Models
 
 |Fixed-effects H<sub>0</sub>| |Fixed-effects H<sub>a</sub>|
@@ -42,8 +45,3 @@ When you are not interested in distinguishing between the fixed-effects and the 
 
 ##### Constrained Random (Ordered) Effects
 Sometimes you are completely certain that an effect must be positive or must be negative. If that is the case, you can do a constrained random effects analysis. Here, you restrict the effect sizes to show one direction only.
-
-### Full Output
-```{r echo = F, results='asis', out.width='50%'}
-htmltools::includeHTML("https://github.com/sophieberkhout/JASP-metaBMA/raw/master/pointing%20results.html")
-```
