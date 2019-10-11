@@ -44,6 +44,6 @@ When you are not interested in distinguishing between the fixed-effects and the 
 Sometimes you are completely certain that an effect must be positive or must be negative. If that is the case, you can do a constrained random effects analysis. Here, you restrict the effect sizes to show one direction only.
 
 ### Full Output
-```{r echo = F}
+```{r echo = F, out.width="75%"}
 htmltools::includeHTML("https://github.com/sophieberkhout/JASP-metaBMA/raw/master/pointing%20results.html")
 ```
