@@ -582,21 +582,38 @@ Group{
         label: qsTr("Cumulative forest plot")
       }
 // Prior and posterior plot
+/*
+      CheckBox
+      {
+        name: "plotPost1"
+        label: qsTr("Prior and posterior")
+      }
+*/
       CheckBox
       {
       name: "plotPosterior"
       label: qsTr("Prior and posterior")
+      enabled: checkBMA.checked || checkCRE.checked
+        CheckBox
+        {
+          name: "shade"
+          label: qsTr("Shade 95% CI")
+        }
       }
+      Group
+      {
+        title: qsTr("Sequential plot")
       CheckBox
       {
       name: "plotSequential"
-      label: qsTr("Sequential plot Bayes factors")
+      label: qsTr("Bayes factors")
       }
       CheckBox
       {
       name: "plotSeqPM"
-      label: qsTr("Sequential plot posterior model probabilities")
+      label: qsTr("Posterior model probabilities")
       }
+    }
     }
 //// End plots section ////
 

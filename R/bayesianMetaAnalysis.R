@@ -288,7 +288,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     bmaTable$position <- 1
     
     # Add standard depencies
-    bmaTable$dependOn(c(dependencies, "mainTable"))
+    bmaTable$dependOn(c(dependencies, "mainTable", "BF"))
     
     # Add columns
     bmaTable$addColumnInfo(name = "model", title = "", type = "string", combine = TRUE)
@@ -398,6 +398,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
               m$BF["random", "fixed"])
     }
 
+    if(options$BF == "BF01"){
+      BF <- 1/BF
+    }
+    if(options$BF == "logBF10"){
+      BF <- log(BF)
+    }
     # Add results to table
     rows <- data.frame(model = model, 
                        parameter = parameter,
@@ -655,11 +661,11 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     priorPlot$plotObject <- plot
     return()
   }
-  
+
   # Plot: Prior and Posterior
   .priorAndPosteriorPlot <- function(jaspResults, dataset, options, ready, dependencies) {
     postContainer <- createJaspContainer(title = "Prior and Posteriors")
-    postContainer$dependOn(c(dependencies, "plotPosterior"))
+    postContainer$dependOn(c(dependencies, "plotPosterior", "shade"))
     jaspResults[["postContainer"]] <- postContainer
     jaspResults[["postContainer"]]$position <- 5
     
@@ -816,11 +822,15 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       #ggplot2::geom_line(ggplot2::aes(colour = df$g)) +
       ggplot2::scale_linetype_manual("", values = valuesLine, labels = labelsModel) +
       ggplot2::scale_color_manual("", values = valuesCol, labels = labelsModel) +
-      # ggplot2::stat_function(fun = mPost,
-      #               xlim = int,
-      #               geom = "area", alpha = alpha, show.legend = F, size = 0, fill = "grey") +
-      # ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
       ggplot2::theme(legend.text.align = 0)
+    
+    if(options$shade){
+      plot <- plot + 
+        ggplot2::stat_function(fun = mPost,
+                      xlim = int,
+                      geom = "area", alpha = alpha, show.legend = F, size = 0, fill = "grey") +
+        ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
+    }
     
     if(any(x == 0)){
       plot <- plot + 
@@ -1350,7 +1360,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     # Fill posterior plot effect size
     if(options$plotSequential){
       seqPlot <- createJaspPlot(plot = NULL, title = "Bayes factors", width = 600, height = 300)
-      seqPlot$dependOn("plotSequential")   
+      seqPlot$dependOn(c("plotSequential", "BF")) 
       seqContainer[["seqPlot"]] <- seqPlot
       .fillSeqPlot(seqPlot, jaspResults, dataset, options, dependencies)
     }
@@ -1377,6 +1387,17 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
         if(options$modelSpecification == "CRE") BFs[i] <- m$BF["ordered", "null"]
         progressbarTick()
       }
+      
+      bfType <- "BF10"
+      if(options$BF == "BF01") {
+        BFs <- 1/BFs
+        bfType <- "BF01"
+      }
+      if(options$BF == "logBF10") {
+        BFs <- log(BFs)
+        bfType <- "logBF10"
+      }
+      
       df <- data.frame(x = 1:nrow(dataset), y = log(BFs))
     # }
     
@@ -1413,7 +1434,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                      plotLineOrPoint = "point",
                                      # pointLegend = TRUE,
                                      xName = "Number of Studies",
-                                     bfType = "BF10"
+                                     bfType = bfType
                                      # pointColors = c("aquamarine3", "darkorange1", "black")
                                      # hasRightAxis = F, 
                                      # addEvidenceArrowText = F
@@ -1463,12 +1484,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       # ggplot2::scale_x_continuous(breaks = xBreaks) +
       ggplot2::guides(colour = ggplot2::guide_legend(ncol = 2)) +
       ggplot2::theme(legend.spacing.x = ggplot2::unit(0.35, 'cm')) +
-      ggplot2::labs(x = "n", y = "Posterior Model \n Probability") + 
+      ggplot2::labs(x = "Number of Studies", y = "Posterior Model \n Probability") + 
       ggplot2::scale_colour_manual(labels = c(expression("Fixed H"[0]),
                                               expression("Fixed H"[1]),
                                               expression("Random H"[0]),
                                               expression("Random H"[1])),
-                                   values = c("#56B4E9", "#009E73", "#CC79A7", "#D55E00"))
+                                   values = c("#56B4E9", "#009E73", "#CC79A7", "#D55E00")) 
     # plot <- PlotRobustnessSequential(dfLines = df,
     #                                  lineColors = c("black", "grey", "red", "blue"),
     #                                  lineTypes = c("solid", "solid", "solid", "solid"))
