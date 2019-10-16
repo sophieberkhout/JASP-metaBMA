@@ -81,7 +81,13 @@ Form
 				id: 				checkFE
 				value: 				"FE"
 				label: 				qsTr("Fixed effects")
-				onCheckedChanged:	if(checked) priorModelProbabilityGroup.resetHypotheses()
+				onCheckedChanged:	{
+					if (checked)
+					{
+						priorModelProbabilityGroup.resetHypotheses()
+						forestObserved.click()
+					}
+				}
 			}
 
 			RadioButton
@@ -365,6 +371,7 @@ Form
 						label: 			qsTr("df:");
 						name: 			"informativeTDf";
 						visible: 		tInformative.checked;
+						min:			1
 						defaultValue: 	1
 					}
 
@@ -468,6 +475,7 @@ Form
 						label: 			qsTr("df:")
 						name: 			"informativehalfTDf"
 						visible: 		halfTInformative.checked
+						min:			1
 						defaultValue: 	1
 					}
 				}
@@ -503,6 +511,7 @@ Form
 
 						RadioButton
 						{
+							id:			forestObserved
 							name: 		"plotForestObserved"
 							label: 		qsTr("Observed")
 							checked: 	true
@@ -560,7 +569,6 @@ Form
 			{
 				name: 		"plotPosterior"
 				label: 		qsTr("Prior and posterior")
-				enabled: 	checkBMA.checked || checkCRE.checked
 
 				CheckBox
 				{
@@ -681,6 +689,7 @@ Form
 						label: 			qsTr("iterations:")
 						name: 			"iterMCMC"
 						defaultValue: 	!checkCRE.checked ? 2000 : 10000
+						min:			100
 						max: 			1000000
 						fieldWidth: 	100
 					}
@@ -690,6 +699,7 @@ Form
 						label: 			qsTr("chains:")
 						name: 			"chainsMCMC"
 						defaultValue: 	4
+						min:			1
 						max: 			10
 						fieldWidth: 	50
 					}

@@ -97,7 +97,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     }
     if(study == "") study <- NULL
     variables.to.read <- c(varES, varSE, lower, upper, study)
-    dataset <- .readDataSetToEnd(columns.as.numeric = variables.to.read)
+    dataset <- .readDataSetToEnd(columns.as.numeric = variables.to.read, 
+                                 exclude.na.listwise = variables.to.read)
     return(dataset)
   }
   
@@ -152,7 +153,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     }
   
     if (lowerES >= upperES)
-      JASP:::.quitAnalysis("The prior lower bound is not smaller than the upper bound.") 
+      .quitAnalysis("The prior lower bound is not smaller than the upper bound.") 
     
   # Heterogeneity prior parameters
     # Inverse gamma prior
@@ -272,7 +273,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                        tau = tau,
                                        # logml = logml,
                                        # logml_iter = logml_iter,
-                                       iter = 10000, # because of an issue with stored variables, it is not yet possible to make it reactive.
+                                       iter = 10000 # because of an issue with stored variables, it is not yet possible to make it reactive.
                                        # chains = chains
       )
     }
@@ -335,6 +336,13 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     # Add standard depencies
     bmaTable$dependOn(c(dependencies, "mainTable", "BF"))
     
+    if (options$BF == "BF10")
+      bfTitle <- "BF\u2081\u2080"
+    else if (options$BF == "BF01")
+      bfTitle <- "BF\u2080\u2081"
+    else
+      bfTitle <- "Log(BF\u2081\u2080)"
+    
     # Add columns
     bmaTable$addColumnInfo(name = "model", title = "", type = "string", combine = TRUE)
     bmaTable$addColumnInfo(name = "parameter", title = "", type = "string")
@@ -344,7 +352,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                            overtitle = "95% CI")
     bmaTable$addColumnInfo(name = "ub", title = "Upper", type = "number",
                            overtitle = "95% CI")    
-    bmaTable$addColumnInfo(name = "BF", title = "BF\u2081\u2080", type = "number")
+    bmaTable$addColumnInfo(name = "BF", title = bfTitle, type = "number")
 
     jaspResults[["bmaTable"]] <- bmaTable
     
@@ -368,34 +376,29 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 
     # Get results per column (different per model)
     if(options$modelSpecification == "BMA"){
-      model <- c(modelFE, modelRE, modelRE, modelBMA, modelBMA)
-      parameter <- c(eta, eta, tau, eta, tau)
-      group <- c(T, T, F, T, F)
+      model <- c(modelFE, modelRE, modelRE, modelBMA)
+      parameter <- c(eta, eta, tau, eta)
+      group <- c(T, T, F, T)
       meanES <- c(m$estimates["fixed", "mean"], 
                   m$estimates["random", "mean"],
                   m$meta$random$estimates["tau", "mean"],
-                  m$estimates["averaged", "mean"],
-                  NA)
+                  m$estimates["averaged", "mean"])
       meanSD <- c(m$estimates["fixed", "sd"], 
                   m$estimates["random", "sd"], 
                   m$meta$random$estimates["tau", "sd"],
-                  m$estimates["averaged", "sd"],
-                  NA)
+                  m$estimates["averaged", "sd"])
       lower <- c(m$estimates["fixed", "2.5%"], 
                  m$estimates["random", "2.5%"], 
                  m$meta$random$estimates["tau", "2.5%"],
-                 m$estimates["averaged", "2.5%"],
-                 NA)
+                 m$estimates["averaged", "2.5%"])
       upper <- c(m$estimates["fixed", "97.5%"], 
                  m$estimates["random", "97.5%"], 
                  m$meta$random$estimates["tau", "97.5%"],
-                 m$estimates["averaged", "97.5%"],
-                 NA)
+                 m$estimates["averaged", "97.5%"])
       BF <- c(m$BF["fixed_H1", "fixed_H0"], 
               m$BF["random_H1", "random_H0"], 
               m$BF["random_H1", "fixed_H1"],
-              m$inclusion$incl.BF,
-              NA)
+              m$inclusion$incl.BF)
     }
     else if(options$modelSpecification == "RE"){
       model <- c(modelRE, modelRE)
@@ -470,8 +473,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     if(options$modelSpecification == "BMA") {
       bmaTable$addFootnote("Averaged over the fixed effects model and the random effects model.",
                            colNames = "model", rowNames="row4") 
-      bmaTable$addFootnote("The estimates for the model averaged \u03C4 are not yet available. It is currently in development.",
-                         colNames = "parameter", rowNames="row5") 
+      # bmaTable$addFootnote("The estimates for the model averaged \u03C4 are not yet available. It is currently in development.",
+      #                    colNames = "parameter", rowNames="row5") 
     }
     if(options$modelSpecification == "CRE"){
       bmaTable$addFootnote(paste0("Bayes Factor of the constrained random effects H\u2081 versus the fixed effects H\u2080 model. The Bayes Factor for the ordered H\u2081 versus the unconstrained (random) effects H\u2081 model is ",
@@ -1016,12 +1019,11 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
     yDiamond <- -0.5
     
-    if(options$modelSpecification == "BMA" || options$modelSpecification == "CRE"){
-      yDiamond <- c(-0.5, -1.5, -2.5)
-    }
-    
-    if(options$forestPlot == "plotForestBoth"){
-      yDiamond <- c(-0.5, -1.1, -1.7)
+    if (options$modelSpecification == "BMA" || options$modelSpecification == "CRE") {
+      if (options$forestPlot == "plotForestBoth")
+        yDiamond <- c(-0.5, -1.1, -1.7)
+      else
+        yDiamond <- c(-0.5, -1.5, -2.5)
     }
     
     # Create diamond for averaged or ordered model
