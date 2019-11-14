@@ -196,6 +196,10 @@ Form
 			title: 		qsTr("Prior")
 			columns:	1
 
+			Group
+			{
+				columns: 2
+
 			RadioButtonGroup
 			{
 				title: 	qsTr("Effect size")
@@ -227,7 +231,7 @@ Form
 						fieldWidth: 	50
 					}
 
-					Group
+				/*	Group
 					{
 
 						CheckBox
@@ -269,7 +273,7 @@ Form
 								max: 			checkCRE.checked && checkNeg.checked ? 0 : Infinity
 							}
 						}
-					}
+					} */
 				}
 
 				RadioButton
@@ -296,7 +300,7 @@ Form
 						fieldWidth: 	50
 					}
 
-					Group
+			/*		Group
 					{
 
 						CheckBox
@@ -338,7 +342,7 @@ Form
 								max: 			checkCRE.checked && checkNeg.checked ? 0 : Infinity
 							}
 						}
-					}
+					}*/
 				}
 
 				RadioButton
@@ -375,7 +379,7 @@ Form
 						defaultValue: 	1
 					}
 
-					Group
+		/*			Group
 					{
 
 						CheckBox
@@ -417,9 +421,50 @@ Form
 								max: 			checkCRE.checked && checkNeg.checked ? 0 : Infinity
 							}
 						}
+					} */
+				}
+			}
+			Group
+			{
+				title: qsTr("Truncation")
+				CheckBox
+				{
+					name: 				"checkLowerPrior"
+					childrenOnSameRow: 	true
+					checked: 			checkCRE.checked && checkPos.checked
+
+					DoubleField
+					{
+						id: 			lowerTT
+						name: 			"lowerTrunc"
+						label: 			qsTr("Lower bound:")
+						fieldWidth: 	50
+						negativeValues: !checkCRE.checked && checkPos.checked
+						defaultValue: 	0
+						max: 			checkCRE.checked && checkNeg.checked ? 0 : Infinity
+					}
+				}
+
+				CheckBox
+				{
+					name: 				"checkUpperPrior"
+					childrenOnSameRow: 	true
+					checked: 			checkCRE.checked && checkNeg.checked
+
+					DoubleField
+					{
+						id: upperTT
+						name: 			"upperTrunc"
+						label: 			qsTr("Upper bound:")
+						fieldWidth: 	50
+						negativeValues: !checkCRE.checked && checkPos.checked
+						defaultValue: 	0
+						max: 			checkCRE.checked && checkNeg.checked ? 0 : Infinity
 					}
 				}
 			}
+
+		}
 
 			RadioButtonGroup
 			{
@@ -572,8 +617,21 @@ Form
 
 				CheckBox
 				{
+					name: "addInfo"
+					label: "Additional info"
+				}
+
+				CheckBox
+				{
 					name: 	"shade"
 					label: 	qsTr("Shade 95% CI")
+				}
+
+				CheckBox
+				{
+					name: "addLines"
+					visible: checkBMA || checkCRE
+					label: qsTr("Add fixed and random effects posterior")
 				}
 			}
 

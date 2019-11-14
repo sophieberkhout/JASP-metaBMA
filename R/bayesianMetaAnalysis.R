@@ -28,14 +28,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                     "priorH0FE", "priorH1FE", "priorH0RE", "priorH1RE",
                     "priorES", "cauchy", "normal", "t",
                     "informativeCauchyLocation", "informativeCauchyScale",
-                    "checkLowerTruncCauchy", "checkUpperTruncCauchy",
-                    "lowerTruncCauchy", "upperTruncCauchy",
+                    "checkLowerPrior", "checkUpperPrior",
+                    "lowerTrunc", "upperTrunc",
                     "informativeNormalMean", "informativeNormalStd",
-                    "checkLowerTruncNormal", "checkUpperTruncNormal",
-                    "lowerTruncNormal", "upperTruncNormal",
                     "informativeTLocation", "informativeTScale", "informativeTDf",
-                    "checkLowerTruncT", "checkUpperTruncT",
-                    "lowerTruncT", "upperTruncT",
                     "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
                     "halfT", "informativehalfTScale", "informativehalfTDf",
                     "BFComputation", "integration", "bridgeSampling", "iterBridge",
@@ -116,26 +112,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     familyES <- "t"
     paramES <- c(options$informativeCauchyLocation, 
                  options$informativeCauchyScale, 1)
-    # If truncated is checked
-    if(options$checkLowerTruncCauchy){
-      lowerES <- options$lowerTruncCauchy
-    }
-    if(options$checkUpperTruncCauchy){
-      upperES <- options$upperTruncCauchy
-    }
   }
   # Normal prior
   if(options$priorES == "normal"){
     familyES <- "norm"
     paramES <- c(options$informativeNormalMean, 
                  options$informativeNormalStd)
-    # If truncated is checked
-    if(options$checkLowerTruncNormal){
-      lowerES <- options$lowerTruncNormal
-    }
-    if(options$checkUpperTruncNormal){
-      upperES <- options$upperTruncNormal
-    }
   }
   # T prior
   if(options$priorES == "t"){
@@ -143,13 +125,14 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     paramES <- c(options$informativeTLocation, 
                  options$informativeTScale, 
                  options$informativeTDf)
-    # If truncated is checked
-    if(options$checkLowerTruncT){
-      lowerES <- options$lowerTruncT
-    }
-    if(options$checkUpperTruncT){
-      upperES <- options$upperTruncT
-    }
+  }
+  
+  # If truncated is checked
+  if(options$checkLowerPrior){
+    lowerES <- options$lowerTrunc
+  }
+  if(options$checkUpperPrior){
+    upperES <- options$upperTrunc
   }
   
   if (lowerES >= upperES)
@@ -179,11 +162,11 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     object=list(d = d, tau = tau),
     dependencies=c("priorES", 
                    "cauchy", "informativeCauchyLocation", "informativeCauchyScale",
-                   "checkLowerTruncCauchy", "lowerTruncCauchy", "checkUpperTruncCauchy", "upperTruncCauchy",
+                   "checkLowerPrior", "lowerTrunc", "checkUpperPrior", "upperTrunc",
                    "normal", "informativeNormalMean", "informativeNormalStd",
-                   "checkLowerTruncNormal", "lowerTruncNormal", "checkUpperTruncNormal", "upperTruncNormal",
+                   # "checkLowerTruncNormal", "lowerTruncNormal", "checkUpperTruncNormal", "upperTruncNormal",
                    "t", "informativeTLocation", "informativeTScale","informativeTDf",
-                   "checkLowerTruncT", "lowerTruncT", "checkUpperTruncT", "upperTruncT",
+                   # "checkLowerTruncT", "lowerTruncT", "checkUpperTruncT", "upperTruncT",
                    "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
                    "halfT", "informativehalfTScale", "informativehalfTDf"))
   
@@ -206,6 +189,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   varES <- options[["effectSize"]]
   
+  # make lower and upper for all priors the same to stop if prior weird
+  # if(all(varES < 0 && options$)
+  
   # Get necessary variables
   y <- dataset[, .v(options[["effectSize"]])]
   
@@ -220,7 +206,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                    return("The 95% CI Lower Bound must be smaller than the Upper Bound.")
                })
     
-    SE <- (upper - lower)/3.92
+    SE <- (upper - lower)/2/qnorm(0.975)
   }
   if(options$standardError != ""){
     SE <- dataset[, .v(options[["standardError"]])]
@@ -248,7 +234,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   prior <- c(options[["priorH0FE"]], options[["priorH1FE"]], 
              options[["priorH0RE"]], options[["priorH1RE"]])
   
-  if(all(prior == 0)) .quitAnalysis("You cannot set all the prior model probabilties to zero.")
+  if(all(prior == 0) && options$modelSpecification != "CRE") .quitAnalysis("You cannot set all the prior model probabilties to zero.")
   
   # Get priors from jasp state
   .bmaPriors(jaspResults, options)
@@ -303,8 +289,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   d                       <- .bmaPriors(jaspResults, options)[["d"]]
   seqResults$mean[1]      <- attr(d, "param")[1]
   s                       <- attr(d, "param")[2]
-  seqResults$lowerMain[1] <- seqResults$mean[1] - 1.96 * s
-  seqResults$upperMain[1] <- seqResults$mean[1] + 1.96 * s
+  seqResults$lowerMain[1] <- seqResults$mean[1] - qnorm(0.975) * s
+  seqResults$upperMain[1] <- seqResults$mean[1] + qnorm(0.975) * s
   
   modelName <- .bmaGetModelName(options)
   
@@ -473,7 +459,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   bmaTable$setData(rows)
   
   if(options$modelSpecification == "BMA") {
-    bmaTable$addFootnote("Averaged over the fixed effects model and the random effects model.",
+    bmaTable$addFootnote("Weighed average over the fixed effects model and the random effects model.",
                          colNames = "model", rowNames="row4") 
     # bmaTable$addFootnote("The estimates for the model averaged \u03C4 are not yet available. It is currently in development.",
     #                    colNames = "parameter", rowNames="row5") 
@@ -637,11 +623,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   # Custom dependencies (only dependent on prior settings)
   priorPlot$dependOn(c("priorES", 
                        "cauchy", "informativeCauchyLocation", "informativeCauchyScale",
-                       "checkLowerTruncCauchy", "lowerTruncCauchy", "checkUpperTruncCauchy", "upperTruncCauchy",
+                       "checkLowerPrior", "lowerTrunc", "checkUpperPrior", "upperTrunc",
                        "normal", "informativeNormalMean", "informativeNormalStd",
-                       "checkLowerTruncNormal", "lowerTruncNormal", "checkUpperTruncNormal", "upperTruncNormal",
-                       "t", "informativeTLocation", "informativeTScale","informativeTDf",
-                       "checkLowerTruncT", "lowerTruncT", "checkUpperTruncT", "upperTruncT"))
+                       "t", "informativeTLocation", "informativeTScale","informativeTDf"
+                       ))
   
   # Fill plot with effect size prior
   .bmaFillPriorPlot(priorPlot, jaspResults, dataset, options, type = "ES")
@@ -712,7 +697,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 # Plot: Prior and Posterior
 .bmaPriorAndPosteriorPlot <- function(jaspResults, dataset, options, ready, dependencies) {
   postContainer <- createJaspContainer(title = "Prior and Posteriors")
-  postContainer$dependOn(c(dependencies, "plotPosterior", "shade"))
+  postContainer$dependOn(c(dependencies, "plotPosterior", "shade", "addInfo", "addLines"))
   jaspResults[["postContainer"]] <- postContainer
   jaspResults[["postContainer"]]$position <- 5
   
@@ -720,13 +705,13 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   postPlotES <- createJaspPlot(plot = NULL, title = "Effect size", width = 450, height = 350)
   
   # Custom dependencies
-  postPlotES$dependOn(c("priorES", "cauchy", "normal", "t",
-                        "informativeCauchyLocation", "informativeCauchyScale",
-                        "lowerTruncCauchy", "upperTruncCauchy",
-                        "informativeNormalMean", "informativeNormalStd",
-                        "lowerTruncNormal", "upperTruncNormal",
-                        "informativeTLocation", "informativeTScale", "informativeTDf",
-                        "lowerTruncT", "upperTruncT"))
+  # postPlotES$dependOn(c("priorES", "cauchy", "normal", "t",
+  #                       "informativeCauchyLocation", "informativeCauchyScale",
+  #                       "lowerTrunc", "upperTrunc",
+  #                       "informativeNormalMean", "informativeNormalStd",
+  #                       "lowerTruncNormal", "upperTruncNormal",
+  #                       "informativeTLocation", "informativeTScale", "informativeTDf",
+  #                       "lowerTruncT", "upperTruncT"))
   
   # Check if ready
   if(!ready){
@@ -740,8 +725,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   # Make posterior plot heterogeneity
   if(options$modelSpecification != "FE"){
     postPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity", width = 450, height = 350)
-    postPlotSE$dependOn(c("priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
-                          "halfT", "informativehalfTScale", "informativehalfTDf"))
+    # postPlotSE$dependOn(c("priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
+    #                       "halfT", "informativehalfTScale", "informativehalfTDf"))
     postContainer[["SE"]] <- postPlotSE
     .bmaFillPostPlot(postPlotSE, jaspResults, dataset, options, type = "SE")
   }
@@ -756,43 +741,44 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   mPostFixed <- m$meta$fixed$posterior_d
   mPostRandom <- m$meta$random$posterior_d
   alpha <- 0.2
-  est <- m$estimates[1, 1]
-  x <- seq(est - 10, est + 10, .001)
   postName <- "Posterior"
-  # Effect size priors
+  valuesCol <- c("black", "black")
+  valuesLine <- c("solid", "dotted")
+  
   if(type == "ES"){
     mPrior <- m$prior_d$fixed
     xlab <- expression("Effect size "*mu)
     xlim <- c(-4, 4)
-    valuesCol <- c("#009E73", "#D55E00", "black", "black")
-    valuesLine <- c("solid", "solid", "solid", "dotted")
     if(options$modelSpecification == "BMA"){
+      valuesLine <- c("solid", "solid", "solid", "dotted")
       mPost <- m$posterior_d
       int <- c(m$estimates["averaged", "2.5%"], m$estimates["averaged", "97.5%"])
       postName <- "Averaged"
       labelsModel <- c(expression("Fixed H"[1]), expression("Random H"[1]), expression("Averaged H"[1]), expression("Prior H"[1]))
+      est <- m$estimates["averaged", 1]
+      x <- seq(est - 2, est + 2, .0001)
     } else if(options$modelSpecification == "RE"){
       mPost <- m$meta$random$posterior_d
       int <- c(m$estimates["random", "2.5%"], m$estimates["random", "97.5%"])
-      valuesCol <- c("black", "black")
-      valuesLine <- c("solid", "dotted")
       postName <- "Random"
       labelsModel <- c(expression("Random H"[1]), expression("Prior H"[1]))
+      est <- m$estimates["random", 1]
+      x <- seq(est - 2, est + 2, .0001)
     } else if(options$modelSpecification == "FE"){
       mPost <- m$meta$fixed$posterior_d
       int <- c(m$estimates["fixed", "2.5%"], m$estimates["fixed", "97.5%"])
-      valuesCol <- c("black", "black")
-      valuesLine <- c("solid", "dotted")
       postName <- "Fixed"
       labelsModel <- c(expression("Fixed H"[1]), expression("Prior H"[1]))
+      est <- m$estimates["fixed", 1]
+      x <- seq(est - 2, est + 2, .0001)
     } else if(options$modelSpecification == "CRE"){
       mPost <- m$posterior_d
       int <- c(m$estimates["ordered", "2.5%"], m$estimates["ordered", "97.5%"])
       xlim <- c(0, 4)
       postName <- "Ordered"
-      valuesCol <- c("#009E73", "black", "#D55E00", "black")
+      est <- m$estimates["ordered", 1]
+      x <- seq(est - 2, est + 2, .0001)
       labelsModel <- c(expression("Fixed H"[1]), expression("Ordered H"[1]), expression("Random H"[1]), expression("Prior H"[1]))
-      
     }
     # Heterogeneity priors
   } else if(type == "SE"){
@@ -801,10 +787,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     int <- c(m$meta$random$estimates["tau", "2.5%"], m$meta$random$estimates["tau", "97.5%"])
     xlab <- expression("Heterogeneity "*tau)
     xlim <- c(0, 3)
-    valuesCol <- c("black", "black")
-    valuesLine <- c("solid", "dotted")
     alpha <- 0.3
     postName <- "Random"
+    est <- m$estimates["random", 1]
+    x <- seq(-0.05, est + 4, .0001)
     if(options$modelSpecification == "BMA") labelsModel <- c(expression("Random H"[1]), expression("Prior H"[1]))
     if(options$modelSpecification == "CRE") labelsModel <- c(expression("Ordered H"[1]), expression("Random H"[1]), expression("Prior H"[1]))
     if(options$modelSpecification == "FE") labelsModel <- c(expression("Fixed H"[1]), expression("Prior H"[1]))
@@ -812,9 +798,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   }
   
   limitsX <- mPost(x)
-  x <- x[limitsX > 0.00001]
+  x <- x[limitsX > 0.0001]
   x2 <- x
-  
+
   x[which.min(x)] <- min(x) - 0.05
   x[which.max(x)] <- max(x) + 0.05
   
@@ -831,10 +817,20 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   df <- data.frame(x = c(x, x), y = c(mPrior(x), mPost(x)), g = rep(c("Prior", postName), each = length(x)))
   df$g <- factor(df$g, levels = c(postName, "Prior"))
   if(type == "ES" && (options$modelSpecification == "BMA" || options$modelSpecification == "CRE")){
-    mPostFixed <- m$meta$fixed$posterior_d
-    mPostRandom <- m$meta$random$posterior_d
+    # mPostFixed <- m$meta$fixed$posterior_d
+    # mPostRandom <- m$meta$random$posterior_d
     df2 <- data.frame(x = x2, y = yPostSE, g = g2)
-    df <- rbind(df2, df)
+    df3 <- rbind(df2, df)
+  }
+  
+  if(type == "ES" && options$addLines) {
+    df <- df3
+    if(options$modelSpecification == "BMA"){
+      valuesCol <- c("#009E73", "#D55E00", "black", "black")
+      # valuesLine <- c("solid", "solid", "solid", "dotted")
+    } else if(options$modelSpecification == "CRE"){
+      valuesCol <- c("#009E73", "black", "#D55E00", "black")
+    }
   }
   
   if(type == "SE" && options$modelSpecification == "BMA") valuesCol <- c("#D55E00", "black")
@@ -854,38 +850,92 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     valuesLine <- c("solid", "solid", "dotted")
   }
   
-  plot <- ggplot2::ggplot(data = df, mapping = ggplot2::aes(x = x, y = y, color = g, linetype = g)) +
-    JASPgraphs::geom_line() +
-    ggplot2::scale_x_continuous(xlab, breaks = getPrettyAxisBreaks(df$x)) +
-    ggplot2::scale_y_continuous("Density", breaks = JASPgraphs::getPrettyAxisBreaks(df$y))
+  if(type == "ES"){
+    if(options$modelSpecification == "FE") BF <- m$meta$fixed$BF["fixed_H1", "fixed_H0"]
+    if(options$modelSpecification == "RE") BF <- m$meta$random$BF["random_H1", "random_H0"]
+    if(options$modelSpecification == "BMA") BF <- m$inclusion$incl.BF
+    if(options$modelSpecification == "CRE") BF <-  m$BF["ordered", "null"]
+    
+    if(options$modelSpecification == "FE") CRI <- m$estimates["fixed", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "RE") CRI <- m$estimates["random", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "BMA") CRI <- m$estimates["averaged", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "CRE") CRI <-  m$meta$ordered$estimates["average_effect", c("2.5%", "97.5%")]
+  } else if (type == "SE"){
+    if(options$modelSpecification == "RE") BF <- m$BF["random_H1", "fixed_H1"]
+    if(options$modelSpecification == "BMA") BF <- m$BF["random_H1", "fixed_H1"]
+    if(options$modelSpecification == "CRE") BF <-  m$BF["ordered", "fixed"]
+    
+    if(options$modelSpecification == "RE") CRI <- m$meta$random$estimates["tau", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "BMA") CRI <- m$meta$random$estimates["tau", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "CRE") CRI <-  m$meta$ordered$estimates["tau", c("2.5%", "97.5%")]
+  }
   
-  plot <- plot + 
-    ggplot2::scale_linetype_manual("", values = valuesLine, labels = labelsModel) +
-    ggplot2::scale_color_manual("", values = valuesCol, labels = labelsModel) +
-    ggplot2::theme(legend.text.align = 0)
+  if(!options$addInfo){
+    BF <- NULL
+    CRI <- NULL
+  }
+  
+  if(options$BF == "BF01") {
+    BF    <- 1/BF
+    bfType <- "BF01"
+  } else if(options$BF == "logBF10") {
+    BF <- log(BF)
+    bfType <- "LogBF10"
+  } else {
+    bfType <- "BF10" 
+  }
+  
+  
+  # plot <- ggplot2::ggplot(data = df, mapping = ggplot2::aes(x = x, y = y, color = g, linetype = g)) +
+  #   JASPgraphs::geom_line() +
+  #   ggplot2::scale_x_continuous(xlab, breaks = getPrettyAxisBreaks(df$x)) +
+  #   ggplot2::scale_y_continuous("Density", breaks = JASPgraphs::getPrettyAxisBreaks(df$y))
+  # 
+  # plot <- plot + 
+  #   ggplot2::scale_linetype_manual("", values = valuesLine, labels = labelsModel) +
+  #   ggplot2::scale_color_manual("", values = valuesCol, labels = labelsModel) +
+  #   ggplot2::theme(legend.text.align = 0)
+  # 
+
+  # 
+  # if(any(x == 0)){
+  #   plot <- plot + 
+  #     ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
+  # }
+  # 
+  # xr   <- range(df$x)
+  # idx  <- which.max(df$y)
+  # xmax <- df$x[idx]
+  # if (xmax > mean(xr)) {
+  #   legend.position = c(0.2, 0.875)
+  # } else {
+  #   legend.position = c(0.80, 0.875)
+  # }
+  # plot <- JASPgraphs::themeJasp(plot, legend.position = legend.position)
+  plot <- PlotPriorAndPosterior(dfLines = df,
+                                lineColors = valuesCol,
+                                BF = BF,
+                                CRI = CRI,
+                                bfType = bfType
+                                # xName = xlab,
+                                # bfType = bfType
+                                )
+
+  plot$subplots$mainGraph <- plot$subplots$mainGraph + 
+    ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
   
   if(options$shade){
-    plot <- plot + 
+    plot$subplots$mainGraph <- plot$subplots$mainGraph +
       ggplot2::stat_function(fun = mPost,
                              xlim = int,
-                             geom = "area", alpha = alpha, show.legend = F, size = 0, fill = "grey") +
-      ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
+                             geom = "area", alpha = alpha, show.legend = F, size = 0, fill = "grey")
   }
   
-  if(any(x == 0)){
-    plot <- plot + 
-      ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
+  if(options$addLines){
+    plot$subplots$mainGraph <- plot$subplots$mainGraph + 
+      ggplot2::scale_linetype_manual(values = valuesLine)
   }
   
-  xr   <- range(df$x)
-  idx  <- which.max(df$y)
-  xmax <- df$x[idx]
-  if (xmax > mean(xr)) {
-    legend.position = c(0.2, 0.875)
-  } else {
-    legend.position = c(0.80, 0.875)
-  }
-  plot <- JASPgraphs::themeJasp(plot, legend.position = legend.position)
   postPlot$plotObject <- plot
   return()
 }
@@ -958,7 +1008,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(all(unlist(options[["confidenceInterval"]]) != "") && !is.null(unlist(options[["confidenceInterval"]]))){
     lower <- dataset[, .v(options[["confidenceInterval"]][[1]][[1]])]
     upper <- dataset[, .v(options[["confidenceInterval"]][[1]][[2]])]
-    varSE <- (upper - lower)/3.92
+    varSE <- (upper - lower)/2/qnorm(0.975)
   }
   if(options[["standardError"]] != ""){
     varSE <- dataset[, .v(options[["standardError"]])]
