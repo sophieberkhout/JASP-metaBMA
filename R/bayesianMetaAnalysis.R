@@ -750,7 +750,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     xlab <- expression("Effect size "*mu)
     xlim <- c(-4, 4)
     if(options$modelSpecification == "BMA"){
-      valuesLine <- c("solid", "solid", "solid", "dotted")
+      # valuesLine <- c("solid", "solid", "solid", "dotted")
       mPost <- m$posterior_d
       int <- c(m$estimates["averaged", "2.5%"], m$estimates["averaged", "97.5%"])
       postName <- "Averaged"
@@ -782,14 +782,20 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     }
     # Heterogeneity priors
   } else if(type == "SE"){
-    mPrior <- m$meta$random$prior_tau
-    mPost <- m$meta$random$posterior_tau
-    int <- c(m$meta$random$estimates["tau", "2.5%"], m$meta$random$estimates["tau", "97.5%"])
+      if(options$modelSpecification == "BMA" || options$modelSpecification == "RE"){
+        mIndex <- m$meta$random
+        postName <- "Random"
+      } else if (options$modelSpecification == "CRE"){
+        mIndex <- m$meta$ordered
+        postName <- "Ordered"
+      }
+    mPrior <- mIndex$prior_tau
+    mPost <-mIndex$posterior_tau
+    int <- c(mIndex$estimates["tau", "2.5%"], mIndex$estimates["tau", "97.5%"])
     xlab <- expression("Heterogeneity "*tau)
     xlim <- c(0, 3)
     alpha <- 0.3
-    postName <- "Random"
-    est <- m$estimates["random", 1]
+    est <- mIndex$estimates[2, "mean"]
     x <- seq(-0.05, est + 4, .0001)
     if(options$modelSpecification == "BMA") labelsModel <- c(expression("Random H"[1]), expression("Prior H"[1]))
     if(options$modelSpecification == "CRE") labelsModel <- c(expression("Ordered H"[1]), expression("Random H"[1]), expression("Prior H"[1]))
@@ -804,12 +810,11 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   x[which.min(x)] <- min(x) - 0.05
   x[which.max(x)] <- max(x) + 0.05
   
-  if(type == "ES"){
-    x2 <- c(x, x)
-    yPostSE <- c(mPostFixed(x), mPostRandom(x))
-    g2 <- rep(c("Fixed", "Random"), each = length(x))
-    
-  }    
+
+  x2 <- c(x, x)
+  yPostSE <- c(mPostFixed(x), mPostRandom(x))
+  g2 <- rep(c("Fixed", "Random"), each = length(x))
+ 
   yPost <- mPost(x)
   yPrior <- mPrior(x)
   
@@ -825,9 +830,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   if(type == "ES" && options$addLines) {
     df <- df3
+    valuesLine <- c("solid", "solid", "solid", "dotted")
     if(options$modelSpecification == "BMA"){
       valuesCol <- c("#009E73", "#D55E00", "black", "black")
-      # valuesLine <- c("solid", "solid", "solid", "dotted")
     } else if(options$modelSpecification == "CRE"){
       valuesCol <- c("#009E73", "black", "#D55E00", "black")
     }
@@ -838,13 +843,18 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(options$modelSpecification == "CRE" && type == "ES"){
     df$g <- factor(df$g, levels = c("Fixed", "Ordered", "Random", "Prior"))
   }
-  if(options$modelSpecification == "CRE" && type == "SE"){
-    mPost <- m$meta$ordered$posterior_tau
-    mPostRandom <- m$meta$random$posterior_tau
-    int <- c(m$meta$ordered$estimates["tau", "2.5%"], m$meta$ordered$estimates["tau", "97.5%"])
-    df <- data.frame(x = c(x, x, x), 
-                     y = c(mPrior(x), mPost(x), mPostRandom(x)), 
-                     g = rep(c("Prior", "Ordered", "Random"), each = length(x)))
+  if(options$modelSpecification == "CRE" && type == "SE" && options$addLines){
+    # mPost <- m$meta$ordered$posterior_tau
+    # mPostRandom <- m$meta$random$posterior_tau
+    # int <- c(m$meta$ordered$estimates["tau", "2.5%"], m$meta$ordered$estimates["tau", "97.5%"])
+    
+    df2 <- data.frame(x = x, y = mPostRandom(x), g = rep("Random", each = length(x)))
+    df3 <- rbind(df2, df)
+    df <- df3
+    
+    # df <- data.frame(x = c(x, x, x), 
+    #                  y = c(mPrior(x), mPost(x), mPostRandom(x)), 
+    #                  g = rep(c("Prior", "Ordered", "Random"), each = length(x)))
     df$g <- factor(df$g, levels = c("Ordered", "Random", "Prior"))
     valuesCol <- c("black", "#D55E00", "black")
     valuesLine <- c("solid", "solid", "dotted")
@@ -890,51 +900,56 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   #   JASPgraphs::geom_line() +
   #   ggplot2::scale_x_continuous(xlab, breaks = getPrettyAxisBreaks(df$x)) +
   #   ggplot2::scale_y_continuous("Density", breaks = JASPgraphs::getPrettyAxisBreaks(df$y))
-  # 
-  # plot <- plot + 
-  #   ggplot2::scale_linetype_manual("", values = valuesLine, labels = labelsModel) +
-  #   ggplot2::scale_color_manual("", values = valuesCol, labels = labelsModel) +
-  #   ggplot2::theme(legend.text.align = 0)
-  # 
-
-  # 
+ 
   # if(any(x == 0)){
   #   plot <- plot + 
   #     ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
   # }
   # 
-  # xr   <- range(df$x)
-  # idx  <- which.max(df$y)
-  # xmax <- df$x[idx]
-  # if (xmax > mean(xr)) {
-  #   legend.position = c(0.2, 0.875)
-  # } else {
-  #   legend.position = c(0.80, 0.875)
-  # }
-  # plot <- JASPgraphs::themeJasp(plot, legend.position = legend.position)
+  xr   <- range(df$x)
+  idx  <- which.max(df$y)
+  xmax <- df$x[idx]
+  if (xmax > mean(xr)) {
+    legend.position = c(0.2, 0.875)
+  } else {
+    legend.position = c(0.80, 0.875)
+  }
   plot <- PlotPriorAndPosterior(dfLines = df,
                                 lineColors = valuesCol,
                                 BF = BF,
                                 CRI = CRI,
-                                bfType = bfType
-                                # xName = xlab,
-                                # bfType = bfType
+                                bfType = bfType,
+                                xName = xlab
                                 )
+  
 
-  plot$subplots$mainGraph <- plot$subplots$mainGraph + 
-    ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
-  
-  if(options$shade){
-    plot$subplots$mainGraph <- plot$subplots$mainGraph +
-      ggplot2::stat_function(fun = mPost,
-                             xlim = int,
-                             geom = "area", alpha = alpha, show.legend = F, size = 0, fill = "grey")
+  .extraPost <- function(plot){
+      plot <- plot + 
+        ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
+      
+      if(options$shade){
+        plot <- plot +
+          ggplot2::stat_function(fun = mPost,
+                                 xlim = int,
+                                 geom = "area", alpha = alpha, show.legend = F, size = 0, fill = "grey")
+      }
+      
+      if(options$addLines){
+        plot <- plot + 
+          ggplot2::scale_linetype_manual(values = valuesLine)
+      }  
+      
+      plot <- plot +
+              ggplot2::scale_linetype_manual("", values = valuesLine, labels = labelsModel) +
+              ggplot2::scale_color_manual("", values = valuesCol, labels = labelsModel) +
+              ggplot2::theme(legend.text.align = 0,
+                             legend.position = legend.position)
+      return(plot)
   }
   
-  if(options$addLines){
-    plot$subplots$mainGraph <- plot$subplots$mainGraph + 
-      ggplot2::scale_linetype_manual(values = valuesLine)
-  }
+  ifelse(options$addInfo, 
+         plot$subplots$mainGraph <- .extraPost(plot$subplots$mainGraph), 
+         plot <- .extraPost(plot))
   
   postPlot$plotObject <- plot
   return()
