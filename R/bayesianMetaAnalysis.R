@@ -352,6 +352,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Get analysis results
   m <- .bmaResultsState(jaspResults, dataset, options, dependencies)
+  # if(is.null(jaspResults[["bmaResults"]])){
+  #   m <- .bmaResults(jaspResults, dataset, options)
+  #   jaspResults[["bmaResults"]] <- createJaspState(object=m, dependencies=dependencies) 
+  # } else {
+  #   m <- jaspResults[["bmaResults"]]$object
+  # }
   
   # Row names (tried to get modelRE idented, but failed)
   modelBMA <- "Averaged"
@@ -495,7 +501,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(!ready){
     return()
   }
-  
+
   # Get results from jasp state
   m <- .bmaResultsState(jaspResults, dataset, options, dependencies)
   
@@ -832,13 +838,13 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     df <- df3
     valuesLine <- c("solid", "solid", "solid", "dotted")
     if(options$modelSpecification == "BMA"){
-      valuesCol <- c("#009E73", "#D55E00", "black", "black")
+      valuesCol <- c("#fcae91ff", "#009E73", "black", "black")
     } else if(options$modelSpecification == "CRE"){
-      valuesCol <- c("#009E73", "black", "#D55E00", "black")
+      valuesCol <- c("#fcae91ff", "black", "#009E73", "black")
     }
   }
   
-  if(type == "SE" && options$modelSpecification == "BMA") valuesCol <- c("#D55E00", "black")
+  if(type == "SE" && options$modelSpecification == "BMA") valuesCol <- c("#009E73", "black")
   
   if(options$modelSpecification == "CRE" && type == "ES"){
     df$g <- factor(df$g, levels = c("Fixed", "Ordered", "Random", "Prior"))
@@ -856,7 +862,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     #                  y = c(mPrior(x), mPost(x), mPostRandom(x)), 
     #                  g = rep(c("Prior", "Ordered", "Random"), each = length(x)))
     df$g <- factor(df$g, levels = c("Ordered", "Random", "Prior"))
-    valuesCol <- c("black", "#D55E00", "black")
+    valuesCol <- c("black", "#009E73", "black")
     valuesLine <- c("solid", "solid", "dotted")
   }
   
@@ -1367,7 +1373,6 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   jaspResults[["seqContainer"]] <- seqContainer
   jaspResults[["seqContainer"]]$position <- 6
   
-  
   # Check if ready
   if(!ready){
     return()
@@ -1457,22 +1462,45 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                              linetype = rep("dashed", 3))
   
   df <- data.frame(x = x, y = dfPMP$prob, g = dfPMP$g)
-  plot <- ggplot2::ggplot(df, ggplot2::aes(x = x, y = y, colour = g)) +
+  plot <- ggplot2::ggplot(df, ggplot2::aes(x = x, y = y, colour = g, linetype = g)) +
     gridLines + 
     ggplot2::geom_line(size = 1.5) +
     ggplot2::scale_y_continuous(limits = c(0,1.25), breaks = c(0, .25, .5, .75, 1)) +
     ggplot2::guides(colour = ggplot2::guide_legend(ncol = 2)) +
     ggplot2::theme(legend.spacing.x = ggplot2::unit(0.35, 'cm')) +
     ggplot2::labs(x = "Number of studies", y = "Posterior model \n probability") + 
-    ggplot2::scale_colour_manual(labels = c(expression("Fixed H"[0]),
+    ggplot2::scale_colour_manual(name = "",
+                                 labels = c(expression("Fixed H"[0]),
                                             expression("Fixed H"[1]),
                                             expression("Random H"[0]),
                                             expression("Random H"[1])),
-                                 values = c("#56B4E9", "#009E73", "#CC79A7", "#D55E00")) 
+                                 values = c("#fcae91ff", "#fcae91ff", "#009E73", "#009E73")) +
+    ggplot2::scale_linetype_manual(name = "",
+                                   labels = c(expression("Fixed H"[0]),
+                                              expression("Fixed H"[1]),
+                                              expression("Random H"[0]),
+                                              expression("Random H"[1])),
+                                   values = rep("solid", 4))
   
-  if(nrow(dataset) < 40) plot <- plot + ggplot2::geom_point(size = 3) 
+  if(nrow(dataset) < 40) {
+    plot <- plot + ggplot2::geom_point(ggplot2::aes(shape = dfPMP$g), size = 3,
+                                                            fill = "white") +
+    ggplot2::scale_shape_manual(name = "", values = c(21, 19, 21, 19),
+                                labels = c(expression("Fixed H"[0]),
+                                           expression("Fixed H"[1]),
+                                           expression("Random H"[0]),
+                                           expression("Random H"[1])))
+  } else {
+    plot <- plot + 
+      ggplot2::scale_linetype_manual(name = "",
+                                     values = c("dotted", "solid", "dotted", "solid"),
+                                     labels = c(expression("Fixed H"[0]),
+                                                expression("Fixed H"[1]),
+                                                expression("Random H"[0]),
+                                                expression("Random H"[1])))
+  }
   
-  plot <- themeJasp(plot, legend.position = c(0.7, 1), legend.title = "none")
+  plot <- themeJasp(plot, legend.position = "top")
   
   seqPMPlot$plotObject <- plot
   return()                              
