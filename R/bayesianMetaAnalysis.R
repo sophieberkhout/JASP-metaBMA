@@ -175,12 +175,45 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 
 #For state
 .bmaResultsState <- function(jaspResults, dataset, options, dependencies) {
-  if(!is.null(jaspResults[["bmaResults"]])) return(jaspResults[["bmaResults"]]$object);
   
-  bmaResults                  <- createJaspState(object=.bmaResults(jaspResults, dataset, options), dependencies=dependencies)
-  jaspResults[["bmaResults"]] <- bmaResults
+  if(!is.null(jaspResults[["bmaResults"]])) return(jaspResults[["bmaResults"]]$object)
+
+  results <- .bmaResults(jaspResults, dataset, options)
   
-  return(bmaResults$object)
+  # This object is too large for .jasp files. Break it up and reassemble only the required components
+  bmaResults <- list()
+
+  # General results
+  bmaResults[["estimates"]] <- results$estimates
+  bmaResults[["prior_models"]] <- results$prior_models
+  bmaResults[["posteriorFunction"]] <- results$posterior_d
+  bmaResults[["posterior_models"]] <- results$posterior_models
+
+  # Results for the fixed effects model
+  bmaResults[["fixedEstimates"]] <- results$meta$fixed$estimates
+  bmaResults[["fixedPosteriorFunction"]] <- results$meta$fixed$posterior_d
+  bmaResults[["fixedPriorFunction"]] <- results$prior_d$fixed
+
+  # Results for the random effects model
+  bmaResults[["randomModel"]] <- results$meta$random
+  bmaResults[["randomEstimates"]] <- bmaResults[["randomModel"]]$estimates 
+  bmaResults[["randomPosteriorFunction"]] <- results$meta$random$posterior_d
+  bmaResults[["randomSummary"]] <- rstan::summary(results$meta$random$stanfit_dstudy)$summary
+
+  # Results for the ordered model
+  bmaResults[["orderedModel"]] <- results$meta$ordered
+  bmaResults[["orderedEstimates"]] <- bmaResults[["orderedEstimates"]]$estimates
+  bmaResults[["orderedSummary"]] <- rstan::summary(results$meta$random$stanfit_dstudy)$summary
+
+  # Bayes factors
+  bmaResults[["BF"]] <- results$BF
+  bmaResults[["inclusionBF"]] <- results$inclusion$incl.BF
+  bmaResults[["fixedBF"]] <- results$meta$fixed$BF
+  bmaResults[["randomBF"]] <- results$meta$random$BF
+ 
+  # Save trimmed down list in state and return
+  jaspResults[["bmaResults"]] <- createJaspState(object=bmaResults, dependencies=dependencies)
+  return(jaspResults[["bmaResults"]]$object)
 }
 
 # Save the Bayesian meta-analysis
@@ -241,7 +274,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   d   <- jaspResults[["bmaPriors"]]$object[["d"]]
   tau <- jaspResults[["bmaPriors"]]$object[["tau"]]
-  
+
   # Bayesian meta analysis
   if(options$modelSpecification != "CRE"){
     # Bayesian model averaging (includes fixed and random effects)
@@ -323,7 +356,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   bmaTable$position <- 1
   
   # Add standard depencies
-  bmaTable$dependOn(c(dependencies, "mainTable", "BF"))
+  bmaTable$dependOn(options = c(dependencies, "mainTable", "BF"))
   
   if (options$BF == "BF10")
     bfTitle <- "BF\u2081\u2080"
@@ -349,15 +382,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(!ready){
     return()
   }
-  
+
   # Get analysis results
   m <- .bmaResultsState(jaspResults, dataset, options, dependencies)
-  # if(is.null(jaspResults[["bmaResults"]])){
-  #   m <- .bmaResults(jaspResults, dataset, options)
-  #   jaspResults[["bmaResults"]] <- createJaspState(object=m, dependencies=dependencies) 
-  # } else {
-  #   m <- jaspResults[["bmaResults"]]$object
-  # }
   
   # Row names (tried to get modelRE idented, but failed)
   modelBMA <- "Averaged"
@@ -375,33 +402,33 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     group <- c(T, T, F, T)
     meanES <- c(m$estimates["fixed", "mean"], 
                 m$estimates["random", "mean"],
-                m$meta$random$estimates["tau", "mean"],
+                m$randomEstimates["tau", "mean"],
                 m$estimates["averaged", "mean"])
     meanSD <- c(m$estimates["fixed", "sd"], 
                 m$estimates["random", "sd"], 
-                m$meta$random$estimates["tau", "sd"],
+                m$randomEstimates["tau", "sd"],
                 m$estimates["averaged", "sd"])
     lower <- c(m$estimates["fixed", "2.5%"], 
                m$estimates["random", "2.5%"], 
-               m$meta$random$estimates["tau", "2.5%"],
+               m$randomEstimates["tau", "2.5%"],
                m$estimates["averaged", "2.5%"])
     upper <- c(m$estimates["fixed", "97.5%"], 
                m$estimates["random", "97.5%"], 
-               m$meta$random$estimates["tau", "97.5%"],
+               m$randomEstimates["tau", "97.5%"],
                m$estimates["averaged", "97.5%"])
     BF <- c(m$BF["fixed_H1", "fixed_H0"], 
             m$BF["random_H1", "random_H0"], 
             m$BF["random_H1", "fixed_H1"],
-            m$inclusion$incl.BF)
+            m$inclusionBF)
   }
   else if(options$modelSpecification == "RE"){
     model <- c(modelRE, modelRE)
     parameter <- c(mu, tau)
     group <- c(T, F)
-    meanES <- m$meta$random$estimates[, "mean"]
-    meanSD <- m$meta$random$estimates[, "sd"]
-    lower <- m$meta$random$estimates[, "2.5%"]
-    upper <- m$meta$random$estimates[, "97.5%"]
+    meanES <- m$randomEstimates[, "mean"]
+    meanSD <- m$randomEstimates[, "sd"]
+    lower <- m$randomEstimates[, "2.5%"]
+    upper <- m$randomEstimates[, "97.5%"]
     BF <- c(m$BF["random_H1", "random_H0"], 
             m$BF["random_H1", "fixed_H1"])
   }
@@ -409,10 +436,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     model <- modelFE
     parameter <- mu
     group <- T
-    meanES <- m$meta$fixed$estimates[, "mean"]
-    meanSD <- m$meta$fixed$estimates[, "sd"]
-    lower <- m$meta$fixed$estimates[, "2.5%"]
-    upper <- m$meta$fixed$estimates[, "97.5%"]
+    meanES <- m$fixedEstimates[, "mean"]
+    meanSD <- m$fixedEstimates[, "sd"]
+    lower <- m$fixedEstimates[, "2.5%"]
+    upper <- m$fixedEstimates[, "97.5%"]
     BF <- m$BF["fixed_H1", "fixed_H0"]
   }
   else if(options$modelSpecification == "CRE"){
@@ -420,17 +447,17 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     parameter <- c(mu, mu, tau, mu, tau)
     group <- c(T, T, F, T, F)
     meanES <- c(m$estimates["fixed", "mean"],
-                m$meta$ordered$estimates[c("average_effect", "tau"), "mean"],
-                m$meta$random$estimates[, "mean"])
+                m$orderedEstimates[c("average_effect", "tau"), "mean"],
+                m$randomEstimates[, "mean"])
     meanSD <- c(m$estimates["fixed", "sd"],
-                m$meta$ordered$estimates[c("average_effect", "tau"), "sd"],
-                m$meta$random$estimates[, "sd"])
+                m$orderedEstimates[c("average_effect", "tau"), "sd"],
+                m$randomEstimates[, "sd"])
     lower <- c(m$estimates["fixed", "2.5%"],
-               m$meta$ordered$estimates[c("average_effect", "tau"), "2.5%"],
-               m$meta$random$estimates[, "2.5%"])
+               m$orderedEstimates[c("average_effect", "tau"), "2.5%"],
+               m$randomEstimates[, "2.5%"])
     upper <- c(m$estimates["fixed", "97.5%"],
-               m$meta$ordered$estimates[c("average_effect", "tau"), "97.5%"],
-               m$meta$random$estimates[, "97.5%"])
+               m$orderedEstimates[c("average_effect", "tau"), "97.5%"],
+               m$randomEstimates[, "97.5%"])
     BF <- c(m$BF["fixed", "null"],
             m$BF["ordered", "null"],
             m$BF["ordered", "fixed"],
@@ -462,7 +489,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                      .isNewGroup = group)
   row.names(rows) <- paste0("row", 1:length(model))
   
-  bmaTable$setData(rows)
+  bmaTable$addRows(rows)
   
   if(options$modelSpecification == "BMA") {
     bmaTable$addFootnote("Weighed average over the fixed effects model and the random effects model.",
@@ -576,15 +603,15 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Fill vectors with estimation variables if not FE
   if(options$modelSpecification != "FE"){
-    estimatedES    <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "mean"]
-    estimatedLower <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "2.5%"]
-    estimatedUpper <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "97.5%"]
+    estimatedES    <- m$randomSummary[3:(length(varES) + 2), "mean"]
+    estimatedLower <- m$randomSummary[3:(length(varES) + 2), "2.5%"]
+    estimatedUpper <- m$randomSummary[3:(length(varES) + 2), "97.5%"]
   }
   
   if(options$modelSpecification == "CRE"){
-    estimatedES <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "mean"]
-    estimatedLower <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "2.5%"]
-    estimatedUpper <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "97.5%"]
+    estimatedES <- m$orderedSummary[3:(length(varES) + 2), "mean"]
+    estimatedLower <- m$orderedSummary[3:(length(varES) + 2), "2.5%"]
+    estimatedUpper <- m$orderedSummary[3:(length(varES) + 2), "97.5%"]
     
   }
   
@@ -744,55 +771,55 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   m <- jaspResults[["bmaResults"]]$object
   
   # Get prior and posterior functions, and 95% CI intervals
-  mPostFixed <- m$meta$fixed$posterior_d
-  mPostRandom <- m$meta$random$posterior_d
+  mPostFixed <- m[["fixedPosteriorFunction"]]
+  mPostRandom <- m[["randomPosteriorFunction"]]
   alpha <- 0.2
   postName <- "Posterior"
   valuesCol <- c("black", "black")
   valuesLine <- c("solid", "dotted")
   
   if(type == "ES"){
-    mPrior <- m$prior_d$fixed
+    mPrior <- m$fixedPriorFunction
     xlab <- expression("Effect size "*mu)
     xlim <- c(-4, 4)
     if(options$modelSpecification == "BMA"){
       # valuesLine <- c("solid", "solid", "solid", "dotted")
-      mPost <- m$posterior_d
+      mPost <- m$posteriorFunction
       int <- c(m$estimates["averaged", "2.5%"], m$estimates["averaged", "97.5%"])
       postName <- "Averaged"
       labelsModel <- c(expression("Fixed H"[1]), expression("Random H"[1]), expression("Averaged H"[1]), expression("Prior H"[1]))
       est <- m$estimates["averaged", 1]
-      x <- seq(est - 2, est + 2, .0001)
+      x <- seq(est - 2, est + 2, .01)
     } else if(options$modelSpecification == "RE"){
-      mPost <- m$meta$random$posterior_d
+      mPost <- m$randomPosteriorFunction
       int <- c(m$estimates["random", "2.5%"], m$estimates["random", "97.5%"])
       postName <- "Random"
       labelsModel <- c(expression("Random H"[1]), expression("Prior H"[1]))
       est <- m$estimates["random", 1]
-      x <- seq(est - 2, est + 2, .0001)
+      x <- seq(est - 2, est + 2, .01)
     } else if(options$modelSpecification == "FE"){
-      mPost <- m$meta$fixed$posterior_d
+      mPost <- m$fixedPosteriorFunction
       int <- c(m$estimates["fixed", "2.5%"], m$estimates["fixed", "97.5%"])
       postName <- "Fixed"
       labelsModel <- c(expression("Fixed H"[1]), expression("Prior H"[1]))
       est <- m$estimates["fixed", 1]
-      x <- seq(est - 2, est + 2, .0001)
+      x <- seq(est - 2, est + 2, .01)
     } else if(options$modelSpecification == "CRE"){
-      mPost <- m$posterior_d
+      mPost <- m$posteriorFunction
       int <- c(m$estimates["ordered", "2.5%"], m$estimates["ordered", "97.5%"])
       xlim <- c(0, 4)
       postName <- "Ordered"
       est <- m$estimates["ordered", 1]
-      x <- seq(est - 2, est + 2, .0001)
+      x <- seq(est - 2, est + 2, .01)
       labelsModel <- c(expression("Fixed H"[1]), expression("Ordered H"[1]), expression("Random H"[1]), expression("Prior H"[1]))
     }
     # Heterogeneity priors
   } else if(type == "SE"){
       if(options$modelSpecification == "BMA" || options$modelSpecification == "RE"){
-        mIndex <- m$meta$random
+        mIndex <- m$randomModel
         postName <- "Random"
       } else if (options$modelSpecification == "CRE"){
-        mIndex <- m$meta$ordered
+        mIndex <- m$orderedModel
         postName <- "Ordered"
       }
     mPrior <- mIndex$prior_tau
@@ -802,7 +829,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     xlim <- c(0, 3)
     alpha <- 0.3
     est <- mIndex$estimates[2, "mean"]
-    x <- seq(-0.05, est + 4, .0001)
+    x <- seq(-0.05, est + 4, .01)
     if(options$modelSpecification == "BMA") labelsModel <- c(expression("Random H"[1]), expression("Prior H"[1]))
     if(options$modelSpecification == "CRE") labelsModel <- c(expression("Ordered H"[1]), expression("Random H"[1]), expression("Prior H"[1]))
     if(options$modelSpecification == "FE") labelsModel <- c(expression("Fixed H"[1]), expression("Prior H"[1]))
@@ -867,23 +894,23 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   }
   
   if(type == "ES"){
-    if(options$modelSpecification == "FE") BF <- m$meta$fixed$BF["fixed_H1", "fixed_H0"]
-    if(options$modelSpecification == "RE") BF <- m$meta$random$BF["random_H1", "random_H0"]
-    if(options$modelSpecification == "BMA") BF <- m$inclusion$incl.BF
+    if(options$modelSpecification == "FE") BF <- m$fixedBF["fixed_H1", "fixed_H0"]
+    if(options$modelSpecification == "RE") BF <- m$randomBF["random_H1", "random_H0"]
+    if(options$modelSpecification == "BMA") BF <- m$inclusionBF
     if(options$modelSpecification == "CRE") BF <-  m$BF["ordered", "null"]
     
     if(options$modelSpecification == "FE") CRI <- m$estimates["fixed", c("2.5%", "97.5%")]
     if(options$modelSpecification == "RE") CRI <- m$estimates["random", c("2.5%", "97.5%")]
     if(options$modelSpecification == "BMA") CRI <- m$estimates["averaged", c("2.5%", "97.5%")]
-    if(options$modelSpecification == "CRE") CRI <-  m$meta$ordered$estimates["average_effect", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "CRE") CRI <-  m$orderedEstimates["average_effect", c("2.5%", "97.5%")]
   } else if (type == "SE"){
     if(options$modelSpecification == "RE") BF <- m$BF["random_H1", "fixed_H1"]
     if(options$modelSpecification == "BMA") BF <- m$BF["random_H1", "fixed_H1"]
     if(options$modelSpecification == "CRE") BF <-  m$BF["ordered", "fixed"]
     
-    if(options$modelSpecification == "RE") CRI <- m$meta$random$estimates["tau", c("2.5%", "97.5%")]
-    if(options$modelSpecification == "BMA") CRI <- m$meta$random$estimates["tau", c("2.5%", "97.5%")]
-    if(options$modelSpecification == "CRE") CRI <-  m$meta$ordered$estimates["tau", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "RE") CRI <- m$randomEstimates["tau", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "BMA") CRI <- m$randomEstimates["tau", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "CRE") CRI <-  m$orderedEstimates["tau", c("2.5%", "97.5%")]
   }
   
   if(!options$addInfo){
@@ -1041,10 +1068,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Assign weights for the estimated point sizes
   # Should be different for ordered analysis
-  se_estimated <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "se_mean"]
+  se_estimated <- m[["randomSummary"]][3:(length(varES) + 2), "se_mean"]
   
   if(options[["modelSpecification"]] == "CRE"){
-    se_estimated <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "se_mean"]
+    se_estimated <- m[["orderedSummary"]][3:(length(varES) + 2), "se_mean"]
   }
   
   weight_estimated <- 1 / se_estimated^2
@@ -1066,15 +1093,15 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Get estimated points and CI's
   if(options$modelSpecification == "BMA" || options$modelSpecification == "RE" || options$modelSpecification == "CRE"){
-    mean_estimates <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "mean"]
-    lower_estimates <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "2.5%"]
-    upper_estimates <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "97.5%"]
+    mean_estimates <- m[["randomSummary"]][3:(length(varES) + 2), "mean"]
+    lower_estimates <- m[["randomSummary"]][3:(length(varES) + 2), "2.5%"]
+    upper_estimates <- m[["randomSummary"]][3:(length(varES) + 2), "97.5%"]
   } 
   # The estimates for the ordered analysis are not always saved
   if(options$modelSpecification == "CRE"){
-    mean_estimates <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[1:length(varES) + 2, "mean"]
-    lower_estimates <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[1:length(varES) + 2, "2.5%"]
-    upper_estimates <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[1:length(varES) + 2, "97.5%"]
+    mean_estimates <- m[["orderedSummary"]][1:length(varES) + 2, "mean"]
+    lower_estimates <- m[["orderedSummary"]][1:length(varES) + 2, "2.5%"]
+    upper_estimates <- m[["orderedSummary"]][1:length(varES) + 2, "97.5%"]
   }
   
   # Create text object for estimated points
@@ -1441,7 +1468,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   dfPMP[c(1, 1 + n, 1 + 2*n, 1 + 3*n), 1] <- pM
   
   rowResults <- .bmaSequentialResults(jaspResults, dataset, options, dependencies)
-  
+
   for(i in 2:nrow(dataset)){
     posterior_models <- rowResults$posterior_models[i]
     
