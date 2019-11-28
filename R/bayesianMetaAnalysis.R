@@ -178,10 +178,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 
   results <- .bmaResults(jaspResults, dataset, options)
   
-  # This object is too large for .jasp files. Break it up and reassemble only the required components
+  # The results object is too large for .jasp files. Break it up and reassemble only the required components.
   bmaResults <- list()
 
-  # General results for the overall analysis
+  # Averaged model
   bma                       <- list()
   bma[["estimates"]]        <- results$estimates
   if(options[["modelSpecification"]] != "CRE")
@@ -193,13 +193,13 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   bma[["yPrior"]]           <- results$meta$fixed$prior_d(bma[["xPost"]])
   bmaResults[["bma"]]       <- bma
 
-  # Results for prior and posterior models
+  # Prior and posterior models
   models                    <- list()
   models[["prior"]]         <- results$prior_models
   models[["posterior"]]     <- results$posterior_models
   bmaResults[["models"]]    <- models
 
-  # Results for Bayes factors
+  # Bayes factors
   bf <- list()
   bf[["BF"]]                <- results$BF
   bf[["inclusionBF"]]       <- results$inclusion$incl.BF
@@ -226,18 +226,19 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   random[["xPost"]]         <- seq(anchorPoint - 2, anchorPoint + 2, .01)
   random[["yPost"]]         <- results$meta$random$posterior_d(random[["xPost"]])
   random[["yPrior"]]        <- results$meta$random$prior_d(random[["xPost"]])
-  # ## Prior and posterior - heterogeneity
+  ## Prior and posterior - heterogeneity
   anchorPoint               <- random[["estimates"]][2, "mean"]
   random[["xPostTau"]]      <- seq(-0.05, anchorPoint + 4, .01)
   random[["yPostTau"]]      <- results$meta$random$posterior_tau(random[["xPostTau"]])
   random[["yPriorTau"]]     <- results$meta$random$prior_tau(random[["xPostTau"]])
   bmaResults[["random"]]    <- random
 
-  # General results for the ordered effects model
+  # Ordered effects model
   if(options[["modelSpecification"]] == "CRE"){
     ordered                 <- list()
     ordered[["estimates"]]  <- results$meta$ordered$estimates
     ordered[["summary"]]    <- rstan::summary(results$meta$ordered$stanfit_dstudy)$summary
+    ## Prior and posterior - heterogeneity
     anchorPoint             <- results$meta$ordered$estimates[2, "mean"]
     ordered[["xPostTau"]]   <- seq(-0.05, anchorPoint + 4, .01)
     ordered[["yPostTau"]]   <- results$meta$ordered$posterior_d(ordered[["xPostTau"]])
@@ -386,11 +387,21 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                      BFs=numeric(1), posterior_models=list()) 
   
   d                       <- .bmaPriors(jaspResults, options)[["d"]]
-  seqResults$mean[1]      <- attr(d, "param")[1]
-  s                       <- attr(d, "param")[2]
-  seqResults$lowerMain[1] <- seqResults$mean[1] - qnorm(0.975) * s
-  seqResults$upperMain[1] <- seqResults$mean[1] + qnorm(0.975) * s
-  
+  # Fix voor truncated priors
+  priorSamples            <- sample(seq(-10, 10, by = 0.001), size = 2e5, replace = TRUE, prob = d(seq(-10, 10, by = 0.001)))
+  seqResults$mean[1]      <- mean(priorSamples)
+  # In case of truncation, take confidence bounds instead of intervals
+  if(options[["checkLowerPrior"]]){
+    seqResults$lowerMain[1] <- quantile(priorSamples, probs = 0.00)
+    seqResults$upperMain[1] <- quantile(priorSamples, probs = 0.95)
+  } else if (options[["checkUpperPrior"]]){
+    seqResults$lowerMain[1] <- quantile(priorSamples, probs = 0.05)
+    seqResults$upperMain[1] <- quantile(priorSamples, probs = 1)
+  } else {
+    seqResults$lowerMain[1] <- quantile(priorSamples, probs = 0.025)
+    seqResults$upperMain[1] <- quantile(priorSamples, probs = 0.975)
+  }
+
   modelName <- .bmaGetModelName(options)
   
   for(i in 2:nrow(dataset)){
@@ -406,7 +417,6 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     if(options[["modelSpecification"]] == "CRE") seqResults$BFs[i] <- bmaResults$BF["ordered", "null"]
     
     seqResults$posterior_models[[i]] <- bmaResults$posterior_models
-
     progressbarTick()
   }
   
