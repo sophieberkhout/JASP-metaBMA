@@ -365,8 +365,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   }
   
   if(isTryError(p)){
-    message <- .extractErrorMessage(p)
-    JASP:::.quitAnalysis(paste0("Error while running R code from the metaBMA package: ", message)) 
+    JASP:::.quitAnalysis(paste0("Error while running R code from the metaBMA package: ", JASP:::.extractErrorMessage(p))) 
   }
 
   return(results)
