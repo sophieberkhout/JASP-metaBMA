@@ -476,6 +476,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     bmaTable$setExpectedSize(5)
   }
 
+  if(options$modelSpecification != "FE"){
+    bmaTable$addFootnote("\u03BC and \u03C4 are the group-level effect size and standard deviation, respectively.")
+  } else {
+    bmaTable$addFootnote("\u03BC is the group-level effect size.")
+  }
+
   jaspResults[["bmaTable"]] <- bmaTable
   
   # Check if ready
@@ -595,9 +601,6 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                          colNames = "BF", rowNames="row2") 
     
   }
-  if(options$modelSpecification != "FE"){
-    bmaTable$addFootnote("\u03BC and \u03C4 are the group-level effect size and standard deviation, respectively.")
-  } else bmaTable$addFootnote("\u03BC is the group-level effect size.")
 }
 
 # Table: Model Probabilities
