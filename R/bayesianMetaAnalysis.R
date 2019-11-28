@@ -136,7 +136,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   }
   
   if (lowerES >= upperES)
-    .quitAnalysis("The prior lower bound is not smaller than the upper bound.") 
+    JASP:::.quitAnalysis("The prior lower bound is not smaller than the upper bound.") 
   
   # Heterogeneity prior parameters
   # Inverse gamma prior
@@ -326,7 +326,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   prior <- c(options[["priorH0FE"]], options[["priorH1FE"]], 
              options[["priorH0RE"]], options[["priorH1RE"]])
   
-  if(all(prior == 0) && options[["modelSpecification"]] != "CRE") .quitAnalysis("You cannot set all the prior model probabilties to zero.")
+  if(all(prior == 0) && options[["modelSpecification"]] != "CRE") 
+    JASP:::.quitAnalysis("You cannot set all the prior model probabilties to zero.")
   
   # Get priors from jasp state
   .bmaPriors(jaspResults, options)
@@ -336,29 +337,38 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 
   # Bayesian meta analysis
   if(options$modelSpecification != "CRE"){
-    # Bayesian model averaging (includes fixed and random effects)
-    results <- metaBMA::meta_bma(y     = y, 
-                                 SE    = SE, 
-                                 prior = prior, 
-                                 d     = d, 
-                                 tau   = tau,
-                                 logml   = logml,
-                                 logml_iter = logml_iter,
-                                 iter     = iter,
-                                 chains = chains)
+    p <- try({
+      # Bayesian model averaging (includes fixed and random effects)
+      results <- metaBMA::meta_bma(y     = y, 
+                                  SE    = SE, 
+                                  prior = prior, 
+                                  d     = d, 
+                                  tau   = tau,
+                                  logml   = logml,
+                                  logml_iter = logml_iter,
+                                  iter     = iter,
+                                  chains = chains)
+    })
   } else {
-    # Ordered effects
-    results <- metaBMA::meta_ordered(y = y, 
-                                     SE = SE, 
-                                     d = d, 
-                                     tau = tau,
-                                     # logml = logml,
-                                     # logml_iter = logml_iter,
-                                     iter = 10000 # because of an issue with stored variables, it is not yet possible to make it reactive.
-                                     # chains = chains
-    )
+    p <- try({
+      # Ordered effects
+      results <- metaBMA::meta_ordered(y = y, 
+                                      SE = SE, 
+                                      d = d, 
+                                      tau = tau,
+                                      # logml = logml,
+                                      # logml_iter = logml_iter,
+                                      iter = 10000 # because of an issue with stored variables, it is not yet possible to make it reactive.
+                                      # chains = chains
+      )
+    })
   }
   
+  if(isTryError(p)){
+    message <- .extractErrorMessage(p)
+    JASP:::.quitAnalysis(paste0("Error while running R code from the metaBMA package: ", message)) 
+  }
+
   return(results)
 }
 
