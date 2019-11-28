@@ -42,9 +42,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   dataset <- .bmaReadData(jaspResults, options)
   
   # Table: Posterior Model Estimates
-  if(options$mainTable){
-    .bmaMainTable(jaspResults, dataset, options, ready, dependencies)
-  }
+  .bmaMainTable(jaspResults, dataset, options, ready, dependencies)
   
   # Table: Model Probabilities
   if(options$postTable){
@@ -749,7 +747,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if (is.null(jaspResults[["bmaPriors"]]))
     .bmaPriors(jaspResults, options)
   priors <- jaspResults[["bmaPriors"]]$object
-  
+
   # Get parameters and x limits
   if(type == "ES"){
     prior <- priors$d

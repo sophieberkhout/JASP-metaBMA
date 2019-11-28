@@ -145,13 +145,6 @@ Form
 
 			CheckBox
 			{
-				name: 		"mainTable";
-				label: 		qsTr("Posterior model estimates")
-				checked:	true
-			}
-
-			CheckBox
-			{
 				name: 	"postTable";
 				label: 	qsTr("Model probabilities")
 			}
