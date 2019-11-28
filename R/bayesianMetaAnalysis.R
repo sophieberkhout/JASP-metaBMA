@@ -267,8 +267,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(options[["modelSpecification"]] == "CRE" && options[["direction"]] == "allPos"){
 
     negativeValues <- function(){
-      if(any(dataset[, .v(options[["effectSize"]])] < 0))
-        return(paste0("Positive numbers found in ", options[["effectSize"]]))
+      if(all(dataset[, .v(options[["effectSize"]])] < 0))
+        return(paste0("No positive numbers found in ", options[["effectSize"]]))
     }
 
     .hasErrors(dataset = dataset,
@@ -278,8 +278,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   } else if(options[["modelSpecification"]] == "CRE" && options[["direction"]] == "allNeg"){
 
     positiveValues <- function(){
-      if(any(dataset[, .v(options[["effectSize"]])] > 0))
-        return(paste0("Negative numbers found in ", options[["effectSize"]]))
+      if(all(dataset[, .v(options[["effectSize"]])] > 0))
+        return(paste0("No negative numbers found in ", options[["effectSize"]]))
     }
 
      .hasErrors(dataset = dataset,
