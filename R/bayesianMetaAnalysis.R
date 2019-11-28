@@ -1005,7 +1005,6 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                 CRI = CRI,
                                 bfType = bfType,
                                 xName = xlab)
-  
 
   .extraPost <- function(plot, int, xPost, yPost){
       
@@ -1029,8 +1028,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   }
 
   if(options[["addInfo"]]){
+    plot$subplots$mainGraph <- plot$subplots$mainGraph + ggplot2::scale_x_continuous(name = xlab, breaks = JASPgraphs::getPrettyAxisBreaks(c(0, xPost)))
     plot$subplots$mainGraph <- .extraPost(plot$subplots$mainGraph, int, xPost, yPost)
   } else {
+    plot <- plot + ggplot2::scale_x_continuous(name = xlab, breaks = JASPgraphs::getPrettyAxisBreaks(c(0, xPost)))
     plot <- .extraPost(plot, int, xPost, yPost)
   }
   
