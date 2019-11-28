@@ -684,12 +684,24 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     esTable$addColumnInfo(name = "estimatedUpper", title = "Upper", type = "number",
                           overtitle = "Estimated")
   }
+
+  # Only show conditional columns for right analysis
+  esTable$showSpecifiedColumnsOnly <- TRUE
   
   # Add table to output
   jaspResults[["esTable"]] <- esTable
   
   # Check if ready
   if(!ready){
+    if(options[["studyLabels"]] != ""){
+      studyLabels <- dataset[, .v(options[["studyLabels"]])]
+      row <- data.frame(study = studyLabels, 
+                  observedES = ".", 
+                  estimatedES = ".", 
+                  estimatedLower = ".", 
+                  estimatedUpper = ".")
+      esTable$addRows(row)
+    }
     return()
   }    
   
@@ -723,9 +735,6 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   } else {
     studyLabels <- paste("Study", 1:length(varES))
   }
-  
-  # Only show conditional columns for right analysis
-  esTable$showSpecifiedColumnsOnly <- TRUE
   
   # Add results to table
   row <- data.frame(study = studyLabels, 
