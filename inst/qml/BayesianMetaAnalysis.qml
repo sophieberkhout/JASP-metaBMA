@@ -630,7 +630,7 @@ Form
 				CheckBox
 				{
 					name: "addLines"
-					visible: checkBMA || checkCRE
+					enabled: checkBMA.checked || checkCRE.checked
 					label: qsTr("Add fixed and random effects posterior")
 				}
 			}
