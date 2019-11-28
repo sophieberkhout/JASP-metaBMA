@@ -752,8 +752,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   jaspResults[["priorContainer"]]$position <- 4
   
   # Create empty plot
-  priorPlot <- createJaspPlot(plot = NULL, title = "Effect Size", 
-                              width = 450, height = 350)
+  priorPlot <- createJaspPlot(plot = NULL, title = "Effect Size", width = 450, height = 350)
+  priorPlot$position <- 1
   
   # Custom dependencies (only dependent on prior settings)
   priorPlot$dependOn(c("priorES", 
@@ -769,10 +769,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Make plot hetergeneity prior
   if(options[["modelSpecification"]] != "FE"){
-    priorPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity", 
-                                  width = 350, height = 350)
+    priorPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity", width = 350, height = 350)
     priorPlotSE$dependOn(c("priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
                            "halfT", "informativehalfTScale", "informativehalfTDf"))
+    priorPlotSE$position <- 2
     .bmaFillPriorPlot(priorPlotSE, jaspResults, dataset, options, type = "SE")
     priorContainer[["SE"]] <- priorPlotSE
   }
@@ -820,7 +820,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   plot <- ggplot2::ggplot(df, ggplot2::aes(x)) +
           ggplot2::stat_function(fun = prior, n = 1000, size = 1) +
           ggplot2::labs(x = xlab, y = "Density") +
-          ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
+          ggplot2::geom_segment(x = 0, y = 0, xend = 0, yend = Inf, linetype = "dotted", color = "black") +
           ggplot2::xlim(xlimLeft, xlimRight) +
           ggplot2::scale_x_continuous(breaks = xBreaks)
   plot <- JASPgraphs::themeJasp(plot)
@@ -837,6 +837,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Create empty plot
   postPlotES <- createJaspPlot(plot = NULL, title = "Effect size", width = 450, height = 350)
+  postPlotES$position <- 1
   
   # Custom dependencies
   # postPlotES$dependOn(c("priorES", "cauchy", "normal", "t",
@@ -861,6 +862,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     postPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity", width = 450, height = 350)
     # postPlotSE$dependOn(c("priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
     #                       "halfT", "informativehalfTScale", "informativehalfTDf"))
+    postPlotSE$position <- 2
     postContainer[["SE"]] <- postPlotSE
     .bmaFillPostPlot(postPlotSE, jaspResults, dataset, options, type = "SE")
   }
@@ -884,7 +886,11 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       # valuesLine <- c("solid", "solid", "solid", "dotted")
       int <- c(bmaResults[["bma"]]$estimates["averaged", "2.5%"], bmaResults[["bma"]]$estimates["averaged", "97.5%"])
       postName <- "Averaged"
-      labelsModel <- c(expression("Fixed H"[1]), expression("Random H"[1]), expression("Averaged H"[1]), expression("Prior H"[1]))
+      if(options[["addLines"]]){
+        labelsModel <- c(expression("Fixed H"[1]), expression("Random H"[1]), expression("Averaged H"[1]), expression("Prior H"[1]))
+      } else {
+        labelsModel <- c(expression("Averaged H"[1]), expression("Prior H"[1]))
+      }
       yPrior <- bmaResults[["bma"]]$yPrior
       xPost <- bmaResults[["bma"]]$xPost
       yPost <- bmaResults[["bma"]]$yPost
@@ -905,7 +911,11 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     } else if(options[["modelSpecification"]] == "CRE"){
       int <- c(bmaResults[["bma"]]$estimates["ordered", "2.5%"], bmaResults[["bma"]]$estimates["ordered", "97.5%"])
       postName <- "Ordered"
-      labelsModel <- c(expression("Fixed H"[1]), expression("Ordered H"[1]), expression("Random H"[1]), expression("Prior H"[1]))
+      if(options[["addLines"]]){
+        labelsModel <- c(expression("Fixed H"[1]), expression("Ordered H"[1]), expression("Random H"[1]), expression("Prior H"[1]))
+      } else {
+        labelsModel <- c(expression("Ordered H"[1]), expression("Prior H"[1]))
+      }
       yPrior <- bmaResults[["bma"]]$yPrior
       xPost <- bmaResults[["bma"]]$xPost
       yPost <- bmaResults[["bma"]]$yPost
@@ -1045,7 +1055,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 
   .extraPost <- function(plot, int, xPost, yPost){
       
-    plot <- plot + ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
+    plot <- plot + ggplot2::geom_segment(x = 0, y = 0, xend = 0, yend = Inf, linetype = "dotted", color = "black")
     
     if(options[["shade"]]){
       shadeData <- data.frame(x = xPost[xPost < max(int) & xPost > min(int)], y = yPost[xPost < max(int) & xPost > min(int)])
@@ -1116,6 +1126,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     forestPlot$dependOn(c("plotForestObserved", "plotForestEstimated", "plotForestBoth", 
                           "checkForestPlot", "ascendingForest", "labelForest",
                           "orderForest"))
+    forestPlot$position <- 1
     .bmaFillForestPlot(forestPlot, jaspResults, dataset, options, studyLabels)
     # Add plot to container
     forestContainer[["forestPlot"]] <- forestPlot
@@ -1124,6 +1135,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(options$plotCumForest){
     cumForestPlot <- createJaspPlot(plot = NULL, title = "Cumulative forest plot", height = height, width = width)
     cumForestPlot$dependOn("plotCumForest")
+    cumForestPlot$position <- 2
     .bmaFillCumForest(cumForestPlot, jaspResults, dataset, options, studyLabels, dependencies)
     forestContainer[["cumForestPlot"]] <- cumForestPlot
   }
@@ -1484,6 +1496,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(options$plotSequential){
     seqPlot <- createJaspPlot(plot = NULL, title = "Bayes factors", height = 400, width = 530)
     seqPlot$dependOn(c("plotSequential", "BF")) 
+    seqPlot$position <- 1
     seqContainer[["seqPlot"]] <- seqPlot
     .bmaFillSeqPlot(seqPlot, jaspResults, dataset, options, dependencies)
   }
@@ -1491,6 +1504,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(options$plotSeqPM){
     seqPMPlot <- createJaspPlot(plot = NULL, title = "Posterior model probabilities", height = 400, width = 530)
     seqPMPlot$dependOn("plotSeqPM")
+    seqPMPlot$position <- 2
     .bmaFillSeqPM(seqPMPlot, jaspResults, dataset, options, dependencies)
     seqContainer[["seqPMPlot"]] <- seqPMPlot
   }
