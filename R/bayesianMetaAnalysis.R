@@ -35,12 +35,15 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                     "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
                     "halfT", "informativehalfTScale", "informativehalfTDf",
                     "BFComputation", "integration", "bridgeSampling", "iterBridge",
-                    "iterMCMC", "chainsMCMC")
+                    "iterMCMC", "chainsMCMC", "seed", "seedBox")
   
   # Dataset with effectSize, standardError, and studyLabels
   # If data is null stuff is missing
   dataset <- .bmaReadData(jaspResults, options)
   
+  # Set seed if user wants to
+  if(options[["seedBox"]]) set.seed(options[["seed"]])
+
   # Table: Posterior Model Estimates
   .bmaMainTable(jaspResults, dataset, options, ready, dependencies)
   
@@ -390,17 +393,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   # Fix voor truncated priors
   priorSamples            <- sample(seq(-10, 10, by = 0.001), size = 2e5, replace = TRUE, prob = d(seq(-10, 10, by = 0.001)))
   seqResults$mean[1]      <- mean(priorSamples)
-  # In case of truncation, take confidence bounds instead of intervals
-  if(options[["checkLowerPrior"]]){
-    seqResults$lowerMain[1] <- quantile(priorSamples, probs = 0.00)
-    seqResults$upperMain[1] <- quantile(priorSamples, probs = 0.95)
-  } else if (options[["checkUpperPrior"]]){
-    seqResults$lowerMain[1] <- quantile(priorSamples, probs = 0.05)
-    seqResults$upperMain[1] <- quantile(priorSamples, probs = 1)
-  } else {
-    seqResults$lowerMain[1] <- quantile(priorSamples, probs = 0.025)
-    seqResults$upperMain[1] <- quantile(priorSamples, probs = 0.975)
-  }
+  seqResults$lowerMain[1] <- quantile(priorSamples, probs = 0.025)
+  seqResults$upperMain[1] <- quantile(priorSamples, probs = 0.975)
 
   modelName <- .bmaGetModelName(options)
   
