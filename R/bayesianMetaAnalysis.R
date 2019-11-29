@@ -23,19 +23,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   ready <- options[["effectSize"]] != "" && (options[["standardError"]] != "" || (all(unlist(options$confidenceInterval) != "")  && !is.null(unlist(options[["confidenceInterval"]])))) 
   
   # Dependencies: basically everything
-  dependencies <- c("effectSize", "standardError", "confidenceInterval","studyLabels", "modelSpecification",
-                    "allPos", "allNeg",
-                    "priorH0FE", "priorH1FE", "priorH0RE", "priorH1RE",
-                    "priorES", "cauchy", "normal", "t",
-                    "informativeCauchyLocation", "informativeCauchyScale",
-                    "checkLowerPrior", "checkUpperPrior",
-                    "lowerTrunc", "upperTrunc",
-                    "informativeNormalMean", "informativeNormalStd",
-                    "informativeTLocation", "informativeTScale", "informativeTDf",
-                    "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
-                    "halfT", "informativehalfTScale", "informativehalfTDf",
-                    "BFComputation", "integration", "bridgeSampling", "iterBridge",
-                    "iterMCMC", "chainsMCMC", "seed", "seedBox")
+  dependencies <- .bmaGetDependencies()
   
   # Dataset with effectSize, standardError, and studyLabels
   # If data is null stuff is missing
@@ -76,6 +64,19 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(options$plotSequential || options$plotSeqPM){
     .bmaSequentialPlot(jaspResults, dataset, options, ready, dependencies)
   }
+}
+
+.bmaGetDependencies <- function(){
+  dependencies <- c("effectSize", "standardError", "confidenceInterval", "modelSpecification",
+                      "allPos", "allNeg", "priorH0FE", "priorH1FE", "priorH0RE", "priorH1RE",
+                      "priorES", "informativeCauchyLocation", "informativeCauchyScale",
+                      "checkLowerPrior", "checkUpperPrior", "lowerTrunc", "upperTrunc",
+                      "informativeNormalMean", "informativeNormalStd",
+                      "informativeTLocation", "informativeTScale", "informativeTDf",
+                      "priorSE", "inverseGammaShape", "inverseGammaScale",
+                      "informativehalfTScale", "informativehalfTDf",
+                      "BFComputation", "iterBridge", "iterMCMC", "chainsMCMC", "seed", "seedBox")
+  return(dependencies)
 }
 
 # Get dataset
@@ -672,7 +673,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 .bmaEffectSizeTable <- function(jaspResults, dataset, options, ready, dependencies) {
   if (!is.null(jaspResults[["esTable"]])) return()
   esTable <- createJaspTable(title = "Effect Sizes per Study")
-  esTable$dependOn(c(dependencies, "esTable"))
+  esTable$dependOn(c(dependencies, "esTable", "studyLabels"))
   esTable$position <- 3
   
   # Add standard columns
@@ -1102,7 +1103,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 # Plot: Forest plot
 .bmaForestPlot <- function(jaspResults, dataset, options, ready, dependencies) {
   forestContainer <- createJaspContainer(title = "Forest Plot")
-  forestContainer$dependOn(dependencies)
+  forestContainer$dependOn(c(dependencies, "studyLabels"))
   jaspResults[["forestContainer"]] <- forestContainer
   jaspResults[["forestContainer"]]$position <- 6
   
