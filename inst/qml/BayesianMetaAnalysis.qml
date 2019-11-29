@@ -145,13 +145,6 @@ Form
 
 			CheckBox
 			{
-				name: 		"mainTable";
-				label: 		qsTr("Posterior model estimates")
-				checked:	true
-			}
-
-			CheckBox
-			{
 				name: 	"postTable";
 				label: 	qsTr("Model probabilities")
 			}
@@ -289,6 +282,7 @@ Form
 						name: 			"informativeNormalMean"
 						visible: 		normalInformative.checked
 						defaultValue: 	0
+						negativeValues: true
 					}
 
 					DoubleField
@@ -630,7 +624,7 @@ Form
 				CheckBox
 				{
 					name: "addLines"
-					visible: checkBMA || checkCRE
+					enabled: checkBMA.checked || checkCRE.checked
 					label: qsTr("Add fixed and random effects posterior")
 				}
 			}
@@ -797,6 +791,19 @@ Form
 							}
 						}
 					}
+				}
+				CheckBox { 
+						name: "seedBox"
+						text: qsTr("Seed")
+						childrenOnSameRow: true
+
+						DoubleField  { 
+								name: "seed"
+								defaultValue: 1
+								min: -999999
+								max: 999999
+								fieldWidth: 60 
+						}
 				}
 			}
 		}

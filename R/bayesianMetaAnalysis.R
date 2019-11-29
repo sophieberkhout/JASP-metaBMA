@@ -35,16 +35,17 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                     "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
                     "halfT", "informativehalfTScale", "informativehalfTDf",
                     "BFComputation", "integration", "bridgeSampling", "iterBridge",
-                    "iterMCMC", "chainsMCMC")
+                    "iterMCMC", "chainsMCMC", "seed", "seedBox")
   
   # Dataset with effectSize, standardError, and studyLabels
   # If data is null stuff is missing
   dataset <- .bmaReadData(jaspResults, options)
   
+  # Set seed if user wants to
+  if(options[["seedBox"]]) set.seed(options[["seed"]])
+
   # Table: Posterior Model Estimates
-  if(options$mainTable){
-    .bmaMainTable(jaspResults, dataset, options, ready, dependencies)
-  }
+  .bmaMainTable(jaspResults, dataset, options, ready, dependencies)
   
   # Table: Model Probabilities
   if(options$postTable){
@@ -136,7 +137,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   }
   
   if (lowerES >= upperES)
-    .quitAnalysis("The prior lower bound is not smaller than the upper bound.") 
+    JASP:::.quitAnalysis("The prior lower bound is not smaller than the upper bound.") 
   
   # Heterogeneity prior parameters
   # Inverse gamma prior
@@ -175,12 +176,82 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 
 #For state
 .bmaResultsState <- function(jaspResults, dataset, options, dependencies) {
-  if(!is.null(jaspResults[["bmaResults"]])) return(jaspResults[["bmaResults"]]$object);
   
-  bmaResults                  <- createJaspState(object=.bmaResults(jaspResults, dataset, options), dependencies=dependencies)
-  jaspResults[["bmaResults"]] <- bmaResults
+  if(!is.null(jaspResults[["bmaResults"]])) return(jaspResults[["bmaResults"]]$object)
+
+  results <- .bmaResults(jaspResults, dataset, options)
   
-  return(bmaResults$object)
+  # The results object is too large for .jasp files. Break it up and reassemble only the required components.
+  bmaResults <- list()
+
+  # Averaged model
+  bma                       <- list()
+  bma[["estimates"]]        <- results$estimates
+  if(options[["modelSpecification"]] != "CRE")
+    anchorPoint             <- results$estimates["averaged", 1]
+  if(options[["modelSpecification"]] == "CRE")
+    anchorPoint             <- results$estimates["ordered", 1]
+  bma[["xPost"]]            <- seq(anchorPoint - 2, anchorPoint + 2, .01)
+  bma[["yPost"]]            <- results$posterior_d(bma[["xPost"]])
+  bma[["yPrior"]]           <- results$meta$fixed$prior_d(bma[["xPost"]])
+  bmaResults[["bma"]]       <- bma
+
+  # Prior and posterior models
+  models                    <- list()
+  models[["prior"]]         <- results$prior_models
+  models[["posterior"]]     <- results$posterior_models
+  bmaResults[["models"]]    <- models
+
+  # Bayes factors
+  bf <- list()
+  bf[["BF"]]                <- results$BF
+  bf[["inclusionBF"]]       <- results$inclusion$incl.BF
+  bf[["fixedBF"]]           <- results$meta$fixed$BF
+  bf[["randomBF"]]          <- results$meta$random$BF
+  bmaResults[["bf"]]        <- bf
+
+  # Fixed effects model
+  fixed <- list()
+  fixed[["estimates"]]      <- results$meta$fixed$estimates
+  ## Prior and posterior - effect size
+  anchorPoint               <- results$meta$fixed$estimates["d", 1]
+  fixed[["xPost"]]          <- seq(anchorPoint - 2, anchorPoint + 2, .01)
+  fixed[["yPost"]]          <- results$meta$fixed$posterior_d(fixed[["xPost"]])
+  fixed[["yPrior"]]         <- results$meta$fixed$prior_d(fixed[["xPost"]])
+  bmaResults[["fixed"]]     <- fixed
+
+  # Random effects model
+  random <- list()
+  random[["estimates"]]     <- results$meta$random$estimates 
+  random[["summary"]]       <- rstan::summary(results$meta$random$stanfit_dstudy)$summary
+  ## Prior and posterior - effect size
+  anchorPoint               <- random[["estimates"]]["d", 1]
+  random[["xPost"]]         <- seq(anchorPoint - 2, anchorPoint + 2, .01)
+  random[["yPost"]]         <- results$meta$random$posterior_d(random[["xPost"]])
+  random[["yPrior"]]        <- results$meta$random$prior_d(random[["xPost"]])
+  ## Prior and posterior - heterogeneity
+  anchorPoint               <- random[["estimates"]][2, "mean"]
+  random[["xPostTau"]]      <- seq(-0.05, anchorPoint + 4, .01)
+  random[["yPostTau"]]      <- results$meta$random$posterior_tau(random[["xPostTau"]])
+  random[["yPriorTau"]]     <- results$meta$random$prior_tau(random[["xPostTau"]])
+  bmaResults[["random"]]    <- random
+
+  # Ordered effects model
+  if(options[["modelSpecification"]] == "CRE"){
+    ordered                 <- list()
+    ordered[["estimates"]]  <- results$meta$ordered$estimates
+    ordered[["summary"]]    <- rstan::summary(results$meta$ordered$stanfit_dstudy)$summary
+    ## Prior and posterior - heterogeneity
+    anchorPoint             <- results$meta$ordered$estimates[2, "mean"]
+    ordered[["xPostTau"]]   <- seq(-0.05, anchorPoint + 4, .01)
+    ordered[["yPostTau"]]   <- results$meta$ordered$posterior_d(ordered[["xPostTau"]])
+    ordered[["yPriorTau"]]  <- results$meta$ordered$prior_d(ordered[["xPostTau"]])
+    bmaResults[["ordered"]] <- ordered
+  }
+ 
+  # Save trimmed down list in state and return
+  jaspResults[["bmaResults"]] <- createJaspState(object=bmaResults, dependencies=dependencies)
+  return(jaspResults[["bmaResults"]]$object)
 }
 
 # Save the Bayesian meta-analysis
@@ -194,6 +265,29 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Get necessary variables
   y <- dataset[, .v(options[["effectSize"]])]
+
+  if(options[["modelSpecification"]] == "CRE" && options[["direction"]] == "allPos"){
+
+    negativeValues <- function(){
+      if(all(dataset[, .v(options[["effectSize"]])] < 0))
+        return(paste0("No positive numbers found in ", options[["effectSize"]]))
+    }
+
+    .hasErrors(dataset = dataset,
+            exitAnalysisIfErrors= TRUE,
+            custom = negativeValues)
+
+  } else if(options[["modelSpecification"]] == "CRE" && options[["direction"]] == "allNeg"){
+
+    positiveValues <- function(){
+      if(all(dataset[, .v(options[["effectSize"]])] > 0))
+        return(paste0("No negative numbers found in ", options[["effectSize"]]))
+    }
+
+     .hasErrors(dataset = dataset,
+            exitAnalysisIfErrors= TRUE,
+            custom = positiveValues)   
+  }
   
   if(all(unlist(options[["confidenceInterval"]]) != "") && !is.null(unlist(options[["confidenceInterval"]]))){
     lower <- dataset[, .v(options$confidenceInterval[[1]][[1]])]
@@ -218,8 +312,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   
   # Advanced: estimation settings
-  iter <- options$iterMCMC
-  chains <- options$chainsMCMC
+  iter <- options[["iterMCMC"]]
+  chains <- options[["chainsMCMC"]]
   
   # Advanced: bayes factor computation
   if(options$BFComputation == "integration"){
@@ -227,53 +321,62 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     logml_iter <- 5000
   } else if(options$BFComputation == "bridgeSampling"){
     logml <- "stan"
-    logml_iter <- options$iterBridge
+    logml_iter <- options[["iterBridge"]]
   }
   
   # Prior model probabilities
   prior <- c(options[["priorH0FE"]], options[["priorH1FE"]], 
              options[["priorH0RE"]], options[["priorH1RE"]])
   
-  if(all(prior == 0) && options$modelSpecification != "CRE") .quitAnalysis("You cannot set all the prior model probabilties to zero.")
+  if(all(prior == 0) && options[["modelSpecification"]] != "CRE") 
+    JASP:::.quitAnalysis("You cannot set all the prior model probabilties to zero.")
   
   # Get priors from jasp state
   .bmaPriors(jaspResults, options)
   
   d   <- jaspResults[["bmaPriors"]]$object[["d"]]
   tau <- jaspResults[["bmaPriors"]]$object[["tau"]]
-  
+
   # Bayesian meta analysis
   if(options$modelSpecification != "CRE"){
-    # Bayesian model averaging (includes fixed and random effects)
-    results <- metaBMA::meta_bma(y     = y, 
-                                 SE    = SE, 
-                                 prior = prior, 
-                                 d     = d, 
-                                 tau   = tau,
-                                 logml   = logml,
-                                 logml_iter = logml_iter,
-                                 iter     = iter,
-                                 chains = chains)
+    p <- try({
+      # Bayesian model averaging (includes fixed and random effects)
+      results <- metaBMA::meta_bma(y     = y, 
+                                  SE    = SE, 
+                                  prior = prior, 
+                                  d     = d, 
+                                  tau   = tau,
+                                  logml   = logml,
+                                  logml_iter = logml_iter,
+                                  iter     = iter,
+                                  chains = chains)
+    })
   } else {
-    # Ordered effects
-    results <- metaBMA::meta_ordered(y = y, 
-                                     SE = SE, 
-                                     d = d, 
-                                     tau = tau,
-                                     # logml = logml,
-                                     # logml_iter = logml_iter,
-                                     iter = 10000 # because of an issue with stored variables, it is not yet possible to make it reactive.
-                                     # chains = chains
-    )
+    p <- try({
+      # Ordered effects
+      results <- metaBMA::meta_ordered(y = y, 
+                                      SE = SE, 
+                                      d = d, 
+                                      tau = tau,
+                                      # logml = logml,
+                                      # logml_iter = logml_iter,
+                                      iter = 10000 # because of an issue with stored variables, it is not yet possible to make it reactive.
+                                      # chains = chains
+      )
+    })
   }
   
+  if(isTryError(p)){
+    JASP:::.quitAnalysis(paste0("Error while running R code from the metaBMA package: ", JASP:::.extractErrorMessage(p))) 
+  }
+
   return(results)
 }
 
 .bmaGetModelName <- function(options) {
-  if(options$modelSpecification == "CRE") return("ordered")
-  if(options$modelSpecification == "BMA") return("averaged")
-  if(options$modelSpecification == "RE")  return("random")
+  if(options[["modelSpecification"]] == "CRE") return("ordered")
+  if(options[["modelSpecification"]] == "BMA") return("averaged")
+  if(options[["modelSpecification"]] == "RE")  return("random")
   return("fixed")
 }
 
@@ -287,27 +390,27 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                      BFs=numeric(1), posterior_models=list()) 
   
   d                       <- .bmaPriors(jaspResults, options)[["d"]]
-  seqResults$mean[1]      <- attr(d, "param")[1]
-  s                       <- attr(d, "param")[2]
-  seqResults$lowerMain[1] <- seqResults$mean[1] - qnorm(0.975) * s
-  seqResults$upperMain[1] <- seqResults$mean[1] + qnorm(0.975) * s
-  
+  # Fix voor truncated priors
+  priorSamples            <- sample(seq(-10, 10, by = 0.001), size = 2e5, replace = TRUE, prob = d(seq(-10, 10, by = 0.001)))
+  seqResults$mean[1]      <- mean(priorSamples)
+  seqResults$lowerMain[1] <- quantile(priorSamples, probs = 0.025)
+  seqResults$upperMain[1] <- quantile(priorSamples, probs = 0.975)
+
   modelName <- .bmaGetModelName(options)
   
   for(i in 2:nrow(dataset)){
-    m <- .bmaResults(jaspResults, dataset[1:i, ], options)
+    bmaResults <- .bmaResults(jaspResults, dataset[1:i, ], options)
     
-    seqResults$mean[i]      <- m$estimates[modelName, "mean"]
-    seqResults$lowerMain[i] <- m$estimates[modelName, "2.5%"]
-    seqResults$upperMain[i] <- m$estimates[modelName, "97.5%"]
+    seqResults$mean[i]      <- bmaResults$estimates[modelName, "mean"]
+    seqResults$lowerMain[i] <- bmaResults$estimates[modelName, "2.5%"]
+    seqResults$upperMain[i] <- bmaResults$estimates[modelName, "97.5%"]
     
-    if(options$modelSpecification == "BMA") seqResults$BFs[i] <- m$inclusion$incl.BF
-    if(options$modelSpecification == "FE")  seqResults$BFs[i] <- m$BF["fixed_H1", "fixed_H0"]
-    if(options$modelSpecification == "RE")  seqResults$BFs[i] <- m$BF["random_H1", "random_H0"]
-    if(options$modelSpecification == "CRE") seqResults$BFs[i] <- m$BF["ordered", "null"]
+    if(options[["modelSpecification"]] == "BMA") seqResults$BFs[i] <- bmaResults$inclusion$incl.BF
+    if(options[["modelSpecification"]] == "FE")  seqResults$BFs[i] <- bmaResults$BF["fixed_H1", "fixed_H0"]
+    if(options[["modelSpecification"]] == "RE")  seqResults$BFs[i] <- bmaResults$BF["random_H1", "random_H0"]
+    if(options[["modelSpecification"]] == "CRE") seqResults$BFs[i] <- bmaResults$BF["ordered", "null"]
     
-    seqResults$posterior_models[[i]] <- m$posterior_models
-    
+    seqResults$posterior_models[[i]] <- bmaResults$posterior_models
     progressbarTick()
   }
   
@@ -323,7 +426,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   bmaTable$position <- 1
   
   # Add standard depencies
-  bmaTable$dependOn(c(dependencies, "mainTable", "BF"))
+  bmaTable$dependOn(options = c(dependencies, "BF"))
   
   if (options$BF == "BF10")
     bfTitle <- "BF\u2081\u2080"
@@ -338,27 +441,11 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   bmaTable$addColumnInfo(name = "ES", title = "Mean", type = "number")
   bmaTable$addColumnInfo(name = "SD", title = "SD", type = "number")
   bmaTable$addColumnInfo(name = "lb", title = "Lower", type = "number",
-                         overtitle = "95% CI")
+                         overtitle = "95% Credible Interval")
   bmaTable$addColumnInfo(name = "ub", title = "Upper", type = "number",
-                         overtitle = "95% CI")    
+                         overtitle = "95% Credible Interval")    
   bmaTable$addColumnInfo(name = "BF", title = bfTitle, type = "number")
-  
-  jaspResults[["bmaTable"]] <- bmaTable
-  
-  # Check if ready
-  if(!ready){
-    return()
-  }
-  
-  # Get analysis results
-  m <- .bmaResultsState(jaspResults, dataset, options, dependencies)
-  # if(is.null(jaspResults[["bmaResults"]])){
-  #   m <- .bmaResults(jaspResults, dataset, options)
-  #   jaspResults[["bmaResults"]] <- createJaspState(object=m, dependencies=dependencies) 
-  # } else {
-  #   m <- jaspResults[["bmaResults"]]$object
-  # }
-  
+
   # Row names (tried to get modelRE idented, but failed)
   modelBMA <- "Averaged"
   modelFE  <- "Fixed effects"   
@@ -368,87 +455,128 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   tau <- "\u03C4"
   mu <- "\u03BC"
   
-  # Get results per column (different per model)
-  if(options$modelSpecification == "BMA"){
-    model <- c(modelFE, modelRE, modelRE, modelBMA)
-    parameter <- c(mu, mu, tau, mu)
-    group <- c(T, T, F, T)
-    meanES <- c(m$estimates["fixed", "mean"], 
-                m$estimates["random", "mean"],
-                m$meta$random$estimates["tau", "mean"],
-                m$estimates["averaged", "mean"])
-    meanSD <- c(m$estimates["fixed", "sd"], 
-                m$estimates["random", "sd"], 
-                m$meta$random$estimates["tau", "sd"],
-                m$estimates["averaged", "sd"])
-    lower <- c(m$estimates["fixed", "2.5%"], 
-               m$estimates["random", "2.5%"], 
-               m$meta$random$estimates["tau", "2.5%"],
-               m$estimates["averaged", "2.5%"])
-    upper <- c(m$estimates["fixed", "97.5%"], 
-               m$estimates["random", "97.5%"], 
-               m$meta$random$estimates["tau", "97.5%"],
-               m$estimates["averaged", "97.5%"])
-    BF <- c(m$BF["fixed_H1", "fixed_H0"], 
-            m$BF["random_H1", "random_H0"], 
-            m$BF["random_H1", "fixed_H1"],
-            m$inclusion$incl.BF)
-  }
-  else if(options$modelSpecification == "RE"){
-    model <- c(modelRE, modelRE)
-    parameter <- c(mu, tau)
-    group <- c(T, F)
-    meanES <- m$meta$random$estimates[, "mean"]
-    meanSD <- m$meta$random$estimates[, "sd"]
-    lower <- m$meta$random$estimates[, "2.5%"]
-    upper <- m$meta$random$estimates[, "97.5%"]
-    BF <- c(m$BF["random_H1", "random_H0"], 
-            m$BF["random_H1", "fixed_H1"])
-  }
-  else if(options$modelSpecification == "FE"){
+  if(options[["modelSpecification"]] == "FE"){
     model <- modelFE
     parameter <- mu
     group <- T
-    meanES <- m$meta$fixed$estimates[, "mean"]
-    meanSD <- m$meta$fixed$estimates[, "sd"]
-    lower <- m$meta$fixed$estimates[, "2.5%"]
-    upper <- m$meta$fixed$estimates[, "97.5%"]
-    BF <- m$BF["fixed_H1", "fixed_H0"]
+    bmaTable$setExpectedSize(1)
   }
-  else if(options$modelSpecification == "CRE"){
+  if(options[["modelSpecification"]] == "RE"){
+    model <- c(modelRE, modelRE)
+    parameter <- c(mu, tau)
+    group <- c(T, F)
+    bmaTable$setExpectedSize(2)
+  }
+  if(options[["modelSpecification"]] == "BMA"){
+    model <- c(modelFE, modelRE, modelRE, modelBMA)
+    parameter <- c(mu, mu, tau, mu)
+    group <- c(T, T, F, T)
+    bmaTable$setExpectedSize(4)
+  }
+  if(options[["modelSpecification"]] == "CRE"){
     model <- c(modelFE, modelCRE, modelCRE, modelRE, modelRE)
     parameter <- c(mu, mu, tau, mu, tau)
     group <- c(T, T, F, T, F)
-    meanES <- c(m$estimates["fixed", "mean"],
-                m$meta$ordered$estimates[c("average_effect", "tau"), "mean"],
-                m$meta$random$estimates[, "mean"])
-    meanSD <- c(m$estimates["fixed", "sd"],
-                m$meta$ordered$estimates[c("average_effect", "tau"), "sd"],
-                m$meta$random$estimates[, "sd"])
-    lower <- c(m$estimates["fixed", "2.5%"],
-               m$meta$ordered$estimates[c("average_effect", "tau"), "2.5%"],
-               m$meta$random$estimates[, "2.5%"])
-    upper <- c(m$estimates["fixed", "97.5%"],
-               m$meta$ordered$estimates[c("average_effect", "tau"), "97.5%"],
-               m$meta$random$estimates[, "97.5%"])
-    BF <- c(m$BF["fixed", "null"],
-            m$BF["ordered", "null"],
-            m$BF["ordered", "fixed"],
-            m$BF["random", "null"],
-            m$BF["random", "fixed"])
+    bmaTable$setExpectedSize(5)
+  }
+
+  if(options$modelSpecification != "FE"){
+    bmaTable$addFootnote("\u03BC and \u03C4 are the group-level effect size and standard deviation, respectively.")
+  } else {
+    bmaTable$addFootnote("\u03BC is the group-level effect size.")
+  }
+
+  jaspResults[["bmaTable"]] <- bmaTable
+  
+  # Check if ready
+  if(!ready){
+    rows <- data.frame(model = model, 
+                    parameter = parameter,
+                    ES = ".", 
+                    SD = ".", 
+                    lb = ".", 
+                    ub = ".", 
+                    BF = ".",
+                    .isNewGroup = group)
+      row.names(rows) <- paste0("row", 1:length(model))
+      bmaTable$addRows(rows)
+      return()
+  }
+
+  # Get analysis results
+  bmaResults <- .bmaResultsState(jaspResults, dataset, options, dependencies)
+  
+  # Get results per column (different per model)
+  if(options[["modelSpecification"]] == "BMA"){
+    meanES <- c(bmaResults[["bma"]]$estimates["fixed", "mean"], 
+                bmaResults[["bma"]]$estimates["random", "mean"],
+                bmaResults[["random"]]$estimates["tau", "mean"],
+                bmaResults[["bma"]]$estimates["averaged", "mean"])
+    meanSD <- c(bmaResults[["bma"]]$estimates["fixed", "sd"], 
+                bmaResults[["bma"]]$estimates["random", "sd"], 
+                bmaResults[["random"]]$estimates["tau", "sd"],
+                bmaResults[["bma"]]$estimates["averaged", "sd"])
+    lower <- c(bmaResults[["bma"]]$estimates["fixed", "2.5%"], 
+               bmaResults[["bma"]]$estimates["random", "2.5%"], 
+               bmaResults[["random"]]$estimates["tau", "2.5%"],
+               bmaResults[["bma"]]$estimates["averaged", "2.5%"])
+    upper <- c(bmaResults[["bma"]]$estimates["fixed", "97.5%"], 
+               bmaResults[["bma"]]$estimates["random", "97.5%"], 
+               bmaResults[["random"]]$estimates["tau", "97.5%"],
+               bmaResults[["bma"]]$estimates["averaged", "97.5%"])
+    BF <- c(bmaResults[["bf"]]$BF["fixed_H1", "fixed_H0"], 
+            bmaResults[["bf"]]$BF["random_H1", "random_H0"], 
+            bmaResults[["bf"]]$BF["random_H1", "fixed_H1"],
+            bmaResults[["bf"]]$inclusionBF)
+  }
+  else if(options[["modelSpecification"]] == "RE"){
+    meanES <- bmaResults[["random"]]$estimates[, "mean"]
+    meanSD <- bmaResults[["random"]]$estimates[, "sd"]
+    lower <- bmaResults[["random"]]$estimates[, "2.5%"]
+    upper <- bmaResults[["random"]]$estimates[, "97.5%"]
+    BF <- c(bmaResults[["bf"]]$BF["random_H1", "random_H0"], 
+            bmaResults[["bf"]]$BF["random_H1", "fixed_H1"])
+  }
+  else if(options[["modelSpecification"]] == "FE"){
+    meanES <- bmaResults[["fixed"]]$estimates[, "mean"]
+    meanSD <- bmaResults[["fixed"]]$estimates[, "sd"]
+    lower <- bmaResults[["fixed"]]$estimates[, "2.5%"]
+    upper <- bmaResults[["fixed"]]$estimates[, "97.5%"]
+    BF <- bmaResults[["bf"]]$BF["fixed_H1", "fixed_H0"]
+  }
+  else if(options[["modelSpecification"]] == "CRE"){
+    meanES <- c(bmaResults[["bma"]]$estimates["fixed", "mean"],
+                bmaResults[["ordered"]]$estimates[c("average_effect", "tau"), "mean"],
+                bmaResults[["random"]]$estimates[, "mean"])
+    meanSD <- c(bmaResults[["bma"]]$estimates["fixed", "sd"],
+                bmaResults[["ordered"]]$estimates[c("average_effect", "tau"), "sd"],
+                bmaResults[["random"]]$estimates[, "sd"])
+    lower <- c(bmaResults[["bma"]]$estimates["fixed", "2.5%"],
+               bmaResults[["ordered"]]$estimates[c("average_effect", "tau"), "2.5%"],
+               bmaResults[["random"]]$estimates[, "2.5%"])
+    upper <- c(bmaResults[["bma"]]$estimates["fixed", "97.5%"],
+               bmaResults[["ordered"]]$estimates[c("average_effect", "tau"), "97.5%"],
+               bmaResults[["random"]]$estimates[, "97.5%"])
+    BF <- c(bmaResults[["bf"]]$BF["fixed", "null"],
+            bmaResults[["bf"]]$BF["ordered", "null"],
+            bmaResults[["bf"]]$BF["ordered", "fixed"],
+            bmaResults[["bf"]]$BF["random", "null"],
+            bmaResults[["bf"]]$BF["random", "fixed"])
   }
   
-  if(options$modelSpecification == "CRE") creBF <- m$BF["ordered", "random"]
-  if(options$BF == "BF01"){
+  if(options[["modelSpecification"]] == "CRE") 
+    creBF <- bmaResults[["bf"]]$BF["ordered", "random"]
+
+  if(options[["BF"]] == "BF01"){
     BF <- 1/BF
-    if(options$modelSpecification == "CRE"){
-      creBF <- 1/m$BF["ordered", "random"]
+    if(options[["modelSpecification"]] == "CRE"){
+      creBF <- 1/bmaResults[["bf"]]$BF["ordered", "random"]
     }
   }
-  if(options$BF == "logBF10"){
+  if(options[["BF"]] == "logBF10"){
     BF <- log(BF)
-    if(options$modelSpecification == "CRE"){
-      creBF <- log(m$BF["ordered", "random"])
+    if(options[["modelSpecification"]] == "CRE"){
+      creBF <- log(bmaResults[["bf"]]$BF["ordered", "random"])
     }
   }
   # Add results to table
@@ -462,7 +590,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                      .isNewGroup = group)
   row.names(rows) <- paste0("row", 1:length(model))
   
-  bmaTable$setData(rows)
+  bmaTable$addRows(rows)
   
   if(options$modelSpecification == "BMA") {
     bmaTable$addFootnote("Weighed average over the fixed effects model and the random effects model.",
@@ -477,9 +605,6 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                          colNames = "BF", rowNames="row2") 
     
   }
-  if(options$modelSpecification != "FE"){
-    bmaTable$addFootnote("\u03BC and \u03C4 are the group-level effect size and standard deviation, respectively.")
-  } else bmaTable$addFootnote("\u03BC is the group-level effect size.")
 }
 
 # Table: Model Probabilities
@@ -487,6 +612,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if (!is.null(jaspResults[["postTable"]])) return()
   postTable <- createJaspTable(title = "Model Probabilities")
   postTable$dependOn(c(dependencies, "postTable"))
+  postTable$position <- 2
   
   # Add columns
   postTable$addColumnInfo(name = "model", title = "", type = "string")
@@ -495,43 +621,51 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Add table to output
   jaspResults[["postTable"]] <- postTable
-  jaspResults[["postTable"]]$position <- 2
+
+  if(options$modelSpecification == "BMA"){
+    model <- c("Fixed H\u2080", "Fixed H\u2081", "Random H\u2080", "Random H\u2081")
+  }
+  if(options$modelSpecification == "FE"){
+    model <- c("Fixed H\u2080", "Fixed H\u2081")
+  }
+  if(options$modelSpecification == "RE"){
+    model <- c("Random H\u2080", "Random H\u2081")
+  }
+  if(options$modelSpecification == "CRE"){
+    model <- c("Fixed H\u2080", "Fixed H\u2081", "Ordered H\u2081", "Random H\u2081")
+  }
   
   # Check if ready
   if(!ready){
+    row <- data.frame(model = model, priorProb = ".", postProb = ".")
+    postTable$addRows(row)
     return()
   }
 
   # Get results from jasp state
-  m <- .bmaResultsState(jaspResults, dataset, options, dependencies)
-  
+  bmaResults <- .bmaResultsState(jaspResults, dataset, options, dependencies)
   
   # Get results per column (different per model)
   if(options$modelSpecification == "BMA"){
-    model <- c("Fixed H\u2080", "Fixed H\u2081", "Random H\u2080", "Random H\u2081")
-    postProb <- m$posterior_models
-    priorProb <- m$prior_models
+    postProb <- bmaResults[["models"]]$posterior
+    priorProb <- bmaResults[["models"]]$prior
   }
   if(options$modelSpecification == "FE"){
-    model <- c("Fixed H\u2080", "Fixed H\u2081")
-    postProb <- m$posterior_models[c("fixed_H0", "fixed_H1")]
-    priorProb <- m$prior_models[1:2]
+    postProb <- bmaResults[["models"]]$posterior[c("fixed_H0", "fixed_H1")]
+    priorProb <- bmaResults[["models"]]$prior[1:2]
   }
   if(options$modelSpecification == "RE"){
-    model <- c("Random H\u2080", "Random H\u2081")
-    postProb <- m$posterior_models[c("random_H0", "random_H1")]
-    priorProb <- m$prior_models[3:4]
+    postProb <- bmaResults[["models"]]$posterior[c("random_H0", "random_H1")]
+    priorProb <- bmaResults[["models"]]$prior[3:4]
   }
   if(options$modelSpecification == "CRE"){
-    model <- c("Fixed H\u2080", "Fixed H\u2081", "Ordered H\u2081", "Random H\u2081")
-    postProb <- m$posterior_models
-    priorProb <- m$prior_models
+    postProb <- bmaResults[["models"]]$posterior
+    priorProb <- bmaResults[["models"]]$prior
   }
   
   # Fill table
   row <- data.frame(model = model, priorProb =  priorProb, postProb = postProb)
   postTable$addRows(row)
-  
 }
 
 # Table: Effect Sizes per Study
@@ -539,6 +673,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if (!is.null(jaspResults[["esTable"]])) return()
   esTable <- createJaspTable(title = "Effect Sizes per Study")
   esTable$dependOn(c(dependencies, "esTable"))
+  esTable$position <- 3
   
   # Add standard columns
   esTable$addColumnInfo(name = "study", title = "", type = "string")
@@ -553,18 +688,29 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     esTable$addColumnInfo(name = "estimatedUpper", title = "Upper", type = "number",
                           overtitle = "Estimated")
   }
+
+  # Only show conditional columns for right analysis
+  esTable$showSpecifiedColumnsOnly <- TRUE
   
   # Add table to output
   jaspResults[["esTable"]] <- esTable
-  jaspResults[["esTable"]]$position <- 3
   
   # Check if ready
   if(!ready){
+    if(options[["studyLabels"]] != ""){
+      studyLabels <- dataset[, .v(options[["studyLabels"]])]
+      row <- data.frame(study = studyLabels, 
+                  observedES = ".", 
+                  estimatedES = ".", 
+                  estimatedLower = ".", 
+                  estimatedUpper = ".")
+      esTable$addRows(row)
+    }
     return()
   }    
   
   # Get results from jasp state
-  m <- .bmaResultsState(jaspResults, dataset, options, dependencies)
+  bmaResults <- .bmaResultsState(jaspResults, dataset, options, dependencies)
   
   # Get effect size variable
   varES <- dataset[, .v(options[["effectSize"]])]
@@ -576,16 +722,15 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Fill vectors with estimation variables if not FE
   if(options$modelSpecification != "FE"){
-    estimatedES    <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "mean"]
-    estimatedLower <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "2.5%"]
-    estimatedUpper <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "97.5%"]
+    estimatedES    <- bmaResults[["random"]]$summary[3:(length(varES) + 2), "mean"]
+    estimatedLower <- bmaResults[["random"]]$summary[3:(length(varES) + 2), "2.5%"]
+    estimatedUpper <- bmaResults[["random"]]$summary[3:(length(varES) + 2), "97.5%"]
   }
   
   if(options$modelSpecification == "CRE"){
-    estimatedES <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "mean"]
-    estimatedLower <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "2.5%"]
-    estimatedUpper <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "97.5%"]
-    
+    estimatedES <- bmaResults[["ordered"]]$summary[3:(length(varES) + 2), "mean"]
+    estimatedLower <- bmaResults[["ordered"]]$summary[3:(length(varES) + 2), "2.5%"]
+    estimatedUpper <- bmaResults[["ordered"]]$summary[3:(length(varES) + 2), "97.5%"] 
   }
   
   # Add studylabels when given, otherwise use "Study n"
@@ -594,9 +739,6 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   } else {
     studyLabels <- paste("Study", 1:length(varES))
   }
-  
-  # Only show conditional columns for right analysis
-  esTable$showSpecifiedColumnsOnly <- TRUE
   
   # Add results to table
   row <- data.frame(study = studyLabels, 
@@ -623,8 +765,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   jaspResults[["priorContainer"]]$position <- 4
   
   # Create empty plot
-  priorPlot <- createJaspPlot(plot = NULL, title = "Effect Size", 
-                              width = 450, height = 350)
+  priorPlot <- createJaspPlot(plot = NULL, title = "Effect Size", width = 450, height = 350)
+  priorPlot$position <- 1
   
   # Custom dependencies (only dependent on prior settings)
   priorPlot$dependOn(c("priorES", 
@@ -639,11 +781,11 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   priorContainer[["ES"]] <- priorPlot
   
   # Make plot hetergeneity prior
-  if(options$modelSpecification != "FE"){
-    priorPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity", 
-                                  width = 350, height = 350)
+  if(options[["modelSpecification"]] != "FE"){
+    priorPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity", width = 350, height = 350)
     priorPlotSE$dependOn(c("priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
                            "halfT", "informativehalfTScale", "informativehalfTDf"))
+    priorPlotSE$position <- 2
     .bmaFillPriorPlot(priorPlotSE, jaspResults, dataset, options, type = "SE")
     priorContainer[["SE"]] <- priorPlotSE
   }
@@ -655,7 +797,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if (is.null(jaspResults[["bmaPriors"]]))
     .bmaPriors(jaspResults, options)
   priors <- jaspResults[["bmaPriors"]]$object
-  
+
   # Get parameters and x limits
   if(type == "ES"){
     prior <- priors$d
@@ -670,13 +812,14 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     xlimLeft <- 0
     xlab <- expression("Heterogeneity "*tau)
   }
+
   if(options$modelSpecification == "CRE" && options$direction == "allPos"){
     xlimLeft <- 0
   } else if(options$modelSpecification == "CRE" && options$direction == "allNeg"){
     xlimRight <- 0
   }
-  xlimRight <- mean + (s * 5)
-  
+
+  xlimRight <- mean + (s * 5)  
   xlimLeft <- xlimLeft - 0.05
   xlimRight <- xlimRight + 0.05
   
@@ -684,18 +827,16 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   x <- c(xlimLeft, xlimRight)
   df <- data.frame(x = x)
   
-  xBreaks <- getPrettyAxisBreaks(seq(xlimLeft, xlimRight, 0.5))
+  xBreaks <- JASPgraphs::getPrettyAxisBreaks(seq(xlimLeft, xlimRight, 0.5))
   
   # Plot density function
   plot <- ggplot2::ggplot(df, ggplot2::aes(x)) +
-    ggplot2::stat_function(fun = prior, n = 1000, size = 1) +
-    ggplot2::labs(x = xlab, y = "Density") +
-    ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
-    ggplot2::xlim(xlimLeft, xlimRight) +
-    ggplot2::scale_x_continuous(breaks = xBreaks)
-  # df2 <- data.frame(x = x, y = x)
-  # plot <- ggplot2::ggplot(df2, ggplot2::aes(x = x, y = y)) + ggplot2::geom_point()
-  plot <- themeJasp(plot)
+          ggplot2::stat_function(fun = prior, n = 1000, size = 1) +
+          ggplot2::labs(x = xlab, y = "Density") +
+          ggplot2::geom_segment(x = 0, y = 0, xend = 0, yend = Inf, linetype = "dotted", color = "black") +
+          ggplot2::xlim(xlimLeft, xlimRight) +
+          ggplot2::scale_x_continuous(breaks = xBreaks)
+  plot <- JASPgraphs::themeJasp(plot)
   priorPlot$plotObject <- plot
   return()
 }
@@ -709,6 +850,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Create empty plot
   postPlotES <- createJaspPlot(plot = NULL, title = "Effect size", width = 450, height = 350)
+  postPlotES$position <- 1
   
   # Custom dependencies
   # postPlotES$dependOn(c("priorES", "cauchy", "normal", "t",
@@ -733,6 +875,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     postPlotSE <- createJaspPlot(plot = NULL, title = "Heterogeneity", width = 450, height = 350)
     # postPlotSE$dependOn(c("priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
     #                       "halfT", "informativehalfTScale", "informativehalfTDf"))
+    postPlotSE$position <- 2
     postContainer[["SE"]] <- postPlotSE
     .bmaFillPostPlot(postPlotSE, jaspResults, dataset, options, type = "SE")
   }
@@ -741,166 +884,162 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 # Fill prior and posterior plot
 .bmaFillPostPlot <- function(postPlot, jaspResults, dataset, options, type){
   # Get results from jasp state
-  m <- jaspResults[["bmaResults"]]$object
+  bmaResults <- .bmaResultsState(jaspResults, dataset, options, dependencies)
   
   # Get prior and posterior functions, and 95% CI intervals
-  mPostFixed <- m$meta$fixed$posterior_d
-  mPostRandom <- m$meta$random$posterior_d
   alpha <- 0.2
   postName <- "Posterior"
   valuesCol <- c("black", "black")
   valuesLine <- c("solid", "dotted")
   
   if(type == "ES"){
-    mPrior <- m$prior_d$fixed
     xlab <- expression("Effect size "*mu)
     xlim <- c(-4, 4)
-    if(options$modelSpecification == "BMA"){
+    if(options[["modelSpecification"]] == "BMA"){
       # valuesLine <- c("solid", "solid", "solid", "dotted")
-      mPost <- m$posterior_d
-      int <- c(m$estimates["averaged", "2.5%"], m$estimates["averaged", "97.5%"])
+      int <- c(bmaResults[["bma"]]$estimates["averaged", "2.5%"], bmaResults[["bma"]]$estimates["averaged", "97.5%"])
       postName <- "Averaged"
-      labelsModel <- c(expression("Fixed H"[1]), expression("Random H"[1]), expression("Averaged H"[1]), expression("Prior H"[1]))
-      est <- m$estimates["averaged", 1]
-      x <- seq(est - 2, est + 2, .0001)
-    } else if(options$modelSpecification == "RE"){
-      mPost <- m$meta$random$posterior_d
-      int <- c(m$estimates["random", "2.5%"], m$estimates["random", "97.5%"])
+      if(options[["addLines"]]){
+        labelsModel <- c(expression("Fixed H"[1]), expression("Random H"[1]), expression("Averaged H"[1]), expression("Prior H"[1]))
+      } else {
+        labelsModel <- c(expression("Averaged H"[1]), expression("Prior H"[1]))
+      }
+      yPrior <- bmaResults[["bma"]]$yPrior
+      xPost <- bmaResults[["bma"]]$xPost
+      yPost <- bmaResults[["bma"]]$yPost
+    } else if(options[["modelSpecification"]] == "RE"){
+      int <- c(bmaResults[["bma"]]$estimates["random", "2.5%"], bmaResults[["bma"]]$estimates["random", "97.5%"])
       postName <- "Random"
       labelsModel <- c(expression("Random H"[1]), expression("Prior H"[1]))
-      est <- m$estimates["random", 1]
-      x <- seq(est - 2, est + 2, .0001)
-    } else if(options$modelSpecification == "FE"){
-      mPost <- m$meta$fixed$posterior_d
-      int <- c(m$estimates["fixed", "2.5%"], m$estimates["fixed", "97.5%"])
+      yPrior <- bmaResults[["random"]]$yPrior
+      xPost <- bmaResults[["random"]]$xPost
+      yPost <- bmaResults[["random"]]$yPost
+    } else if(options[["modelSpecification"]] == "FE"){
+      int <- c(bmaResults[["bma"]]$estimates["fixed", "2.5%"], bmaResults[["bma"]]$estimates["fixed", "97.5%"])
       postName <- "Fixed"
       labelsModel <- c(expression("Fixed H"[1]), expression("Prior H"[1]))
-      est <- m$estimates["fixed", 1]
-      x <- seq(est - 2, est + 2, .0001)
-    } else if(options$modelSpecification == "CRE"){
-      mPost <- m$posterior_d
-      int <- c(m$estimates["ordered", "2.5%"], m$estimates["ordered", "97.5%"])
-      xlim <- c(0, 4)
+      yPrior <- bmaResults[["fixed"]]$yPrior
+      xPost <- bmaResults[["fixed"]]$xPost
+      yPost <- bmaResults[["fixed"]]$yPost
+    } else if(options[["modelSpecification"]] == "CRE"){
+      int <- c(bmaResults[["bma"]]$estimates["ordered", "2.5%"], bmaResults[["bma"]]$estimates["ordered", "97.5%"])
       postName <- "Ordered"
-      est <- m$estimates["ordered", 1]
-      x <- seq(est - 2, est + 2, .0001)
-      labelsModel <- c(expression("Fixed H"[1]), expression("Ordered H"[1]), expression("Random H"[1]), expression("Prior H"[1]))
+      if(options[["addLines"]]){
+        labelsModel <- c(expression("Fixed H"[1]), expression("Ordered H"[1]), expression("Random H"[1]), expression("Prior H"[1]))
+      } else {
+        labelsModel <- c(expression("Ordered H"[1]), expression("Prior H"[1]))
+      }
+      yPrior <- bmaResults[["bma"]]$yPrior
+      xPost <- bmaResults[["bma"]]$xPost
+      yPost <- bmaResults[["bma"]]$yPost
     }
     # Heterogeneity priors
   } else if(type == "SE"){
-      if(options$modelSpecification == "BMA" || options$modelSpecification == "RE"){
-        mIndex <- m$meta$random
-        postName <- "Random"
-      } else if (options$modelSpecification == "CRE"){
-        mIndex <- m$meta$ordered
-        postName <- "Ordered"
-      }
-    mPrior <- mIndex$prior_tau
-    mPost <-mIndex$posterior_tau
-    int <- c(mIndex$estimates["tau", "2.5%"], mIndex$estimates["tau", "97.5%"])
+    if(options[["modelSpecification"]] == "BMA" || options[["modelSpecification"]] == "RE"){
+      int <- c(bmaResults[["random"]]$estimates["tau", "2.5%"], bmaResults[["random"]]$estimates["tau", "97.5%"])
+      postName <- "Random"
+      yPrior <- bmaResults[["random"]]$yPriorTau
+      xPost <- bmaResults[["random"]]$xPostTau
+      yPost <- bmaResults[["random"]]$yPostTau
+    } else if (options[["modelSpecification"]] == "CRE"){
+      int <- c(bmaResults[["ordered"]]$estimates["tau", "2.5%"], bmaResults[["ordered"]]$estimates["tau", "97.5%"])
+      postName <- "Ordered"
+      yPrior <- bmaResults[["ordered"]]$yPriorTau
+      xPost <- bmaResults[["ordered"]]$xPostTau
+      yPost <- bmaResults[["ordered"]]$yPostTau
+    }
+
     xlab <- expression("Heterogeneity "*tau)
     xlim <- c(0, 3)
     alpha <- 0.3
-    est <- mIndex$estimates[2, "mean"]
-    x <- seq(-0.05, est + 4, .0001)
-    if(options$modelSpecification == "BMA") labelsModel <- c(expression("Random H"[1]), expression("Prior H"[1]))
-    if(options$modelSpecification == "CRE") labelsModel <- c(expression("Ordered H"[1]), expression("Random H"[1]), expression("Prior H"[1]))
-    if(options$modelSpecification == "FE") labelsModel <- c(expression("Fixed H"[1]), expression("Prior H"[1]))
-    if(options$modelSpecification == "RE") labelsModel <- c(expression("Random H"[1]), expression("Prior H"[1]))
+
+    if(options[["modelSpecification"]] == "BMA") labelsModel <- c(expression("Random H"[1]), expression("Prior H"[1]))
+    if(options[["modelSpecification"]] == "CRE") labelsModel <- c(expression("Ordered H"[1]), expression("Random H"[1]), expression("Prior H"[1]))
+    if(options[["modelSpecification"]] == "FE") labelsModel <- c(expression("Fixed H"[1]), expression("Prior H"[1]))
+    if(options[["modelSpecification"]] == "RE") labelsModel <- c(expression("Random H"[1]), expression("Prior H"[1]))
   }
   
-  limitsX <- mPost(x)
-  x <- x[limitsX > 0.0001]
-  x2 <- x
+  # limitsX <- yPost
+  # xPost <- xPost[limitsX > 0.0001]
+  x2 <- xPost
 
-  x[which.min(x)] <- min(x) - 0.05
-  x[which.max(x)] <- max(x) + 0.05
+  # xPost[which.min(xPost)] <- min(xPost) - 0.05
+  # xPost[which.max(xPost)] <- max(xPost) + 0.05
   
-
-  x2 <- c(x, x)
-  yPostSE <- c(mPostFixed(x), mPostRandom(x))
-  g2 <- rep(c("Fixed", "Random"), each = length(x))
- 
-  yPost <- mPost(x)
-  yPrior <- mPrior(x)
+  x2 <- c(xPost, xPost)
+  yPostSE <- c(bmaResults[["fixed"]]$yPost, bmaResults[["random"]]$yPost)
+  g2 <- rep(c("Fixed", "Random"), each = length(xPost))
   
-  
-  df <- data.frame(x = c(x, x), y = c(mPrior(x), mPost(x)), g = rep(c("Prior", postName), each = length(x)))
+  df <- data.frame(x = c(xPost, xPost), y = c(yPrior, yPost), g = rep(c("Prior", postName), each = length(xPost)))
   df$g <- factor(df$g, levels = c(postName, "Prior"))
-  if(type == "ES" && (options$modelSpecification == "BMA" || options$modelSpecification == "CRE")){
-    # mPostFixed <- m$meta$fixed$posterior_d
-    # mPostRandom <- m$meta$random$posterior_d
+  
+  if(type == "ES" && (options[["modelSpecification"]] == "BMA" || options[["modelSpecification"]] == "CRE")){
     df2 <- data.frame(x = x2, y = yPostSE, g = g2)
     df3 <- rbind(df2, df)
   }
   
-  if(type == "ES" && options$addLines) {
+  if(type == "ES" && options[["addLines"]] && (options[["modelSpecification"]] == "BMA" || options[["modelSpecification"]] == "CRE")) {
     df <- df3
     valuesLine <- c("solid", "solid", "solid", "dotted")
-    if(options$modelSpecification == "BMA"){
+    if(options[["modelSpecification"]] == "BMA"){
       valuesCol <- c("#fcae91ff", "#009E73", "black", "black")
-    } else if(options$modelSpecification == "CRE"){
+    } else if(options[["modelSpecification"]] == "CRE"){
       valuesCol <- c("#fcae91ff", "black", "#009E73", "black")
     }
   }
   
-  if(type == "SE" && options$modelSpecification == "BMA") valuesCol <- c("#009E73", "black")
+  if(type == "SE" && options[["modelSpecification"]] == "BMA") 
+    valuesCol <- c("#009E73", "black")
   
-  if(options$modelSpecification == "CRE" && type == "ES"){
+  if(options[["modelSpecification"]] == "CRE" && type == "ES")
     df$g <- factor(df$g, levels = c("Fixed", "Ordered", "Random", "Prior"))
-  }
-  if(options$modelSpecification == "CRE" && type == "SE" && options$addLines){
-    # mPost <- m$meta$ordered$posterior_tau
-    # mPostRandom <- m$meta$random$posterior_tau
-    # int <- c(m$meta$ordered$estimates["tau", "2.5%"], m$meta$ordered$estimates["tau", "97.5%"])
+
+  if(options[["modelSpecification"]] == "CRE" && type == "SE" && options[["addLines"]]){
     
-    df2 <- data.frame(x = x, y = mPostRandom(x), g = rep("Random", each = length(x)))
+    df2 <- data.frame(x = bmaResults[["random"]]$xPost, y = bmaResults[["random"]]$yPost, g = rep("Random", each = length(bmaResults[["random"]]$xPost)))
     df3 <- rbind(df2, df)
     df <- df3
     
-    # df <- data.frame(x = c(x, x, x), 
-    #                  y = c(mPrior(x), mPost(x), mPostRandom(x)), 
-    #                  g = rep(c("Prior", "Ordered", "Random"), each = length(x)))
     df$g <- factor(df$g, levels = c("Ordered", "Random", "Prior"))
     valuesCol <- c("black", "#009E73", "black")
     valuesLine <- c("solid", "solid", "dotted")
   }
   
   if(type == "ES"){
-    if(options$modelSpecification == "FE") BF <- m$meta$fixed$BF["fixed_H1", "fixed_H0"]
-    if(options$modelSpecification == "RE") BF <- m$meta$random$BF["random_H1", "random_H0"]
-    if(options$modelSpecification == "BMA") BF <- m$inclusion$incl.BF
-    if(options$modelSpecification == "CRE") BF <-  m$BF["ordered", "null"]
+    if(options$modelSpecification == "FE") BF <- bmaResults[["bf"]]$fixedBF["fixed_H1", "fixed_H0"]
+    if(options$modelSpecification == "RE") BF <- bmaResults[["bf"]]$randomBF["random_H1", "random_H0"]
+    if(options$modelSpecification == "BMA") BF <- bmaResults[["bf"]]$inclusionBF
+    if(options$modelSpecification == "CRE") BF <- bmaResults[["bf"]]$BF["ordered", "null"]
     
-    if(options$modelSpecification == "FE") CRI <- m$estimates["fixed", c("2.5%", "97.5%")]
-    if(options$modelSpecification == "RE") CRI <- m$estimates["random", c("2.5%", "97.5%")]
-    if(options$modelSpecification == "BMA") CRI <- m$estimates["averaged", c("2.5%", "97.5%")]
-    if(options$modelSpecification == "CRE") CRI <-  m$meta$ordered$estimates["average_effect", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "FE") CRI <- bmaResults[["bma"]]$estimates["fixed", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "RE") CRI <- bmaResults[["bma"]]$estimates["random", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "BMA") CRI <- bmaResults[["bma"]]$estimates["averaged", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "CRE") CRI <- bmaResults[["ordered"]]$estimates["average_effect", c("2.5%", "97.5%")]
   } else if (type == "SE"){
-    if(options$modelSpecification == "RE") BF <- m$BF["random_H1", "fixed_H1"]
-    if(options$modelSpecification == "BMA") BF <- m$BF["random_H1", "fixed_H1"]
-    if(options$modelSpecification == "CRE") BF <-  m$BF["ordered", "fixed"]
+    if(options$modelSpecification == "RE") BF <- bmaResults[["bf"]]$BF["random_H1", "fixed_H1"]
+    if(options$modelSpecification == "BMA") BF <- bmaResults[["bf"]]$BF["random_H1", "fixed_H1"]
+    if(options$modelSpecification == "CRE") BF <- bmaResults[["bf"]]$BF["ordered", "fixed"]
     
-    if(options$modelSpecification == "RE") CRI <- m$meta$random$estimates["tau", c("2.5%", "97.5%")]
-    if(options$modelSpecification == "BMA") CRI <- m$meta$random$estimates["tau", c("2.5%", "97.5%")]
-    if(options$modelSpecification == "CRE") CRI <-  m$meta$ordered$estimates["tau", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "RE") CRI <- bmaResults[["random"]]$estimates["tau", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "BMA") CRI <- bmaResults[["random"]]$estimates["tau", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "CRE") CRI <- bmaResults[["random"]]$estimates["tau", c("2.5%", "97.5%")]
   }
   
-  if(!options$addInfo){
+  if(!options[["addInfo"]]){
     BF <- NULL
     CRI <- NULL
-  }
-  
-  if(options$BF == "BF01") {
-    BF    <- 1/BF
-    bfType <- "BF01"
-  } else if(options$BF == "logBF10") {
-    BF <- log(BF)
-    bfType <- "LogBF10"
+    bfType <- NULL
   } else {
-    bfType <- "BF10" 
+    if(options[["BF"]] == "BF01") {
+      BF    <- 1/BF
+      bfType <- "BF01"
+    } else if(options[["BF"]] == "logBF10") {
+      BF <- log(BF)
+      bfType <- "LogBF10"
+    } else {
+      bfType <- "BF10" 
+    }
   }
-  
   
   # plot <- ggplot2::ggplot(data = df, mapping = ggplot2::aes(x = x, y = y, color = g, linetype = g)) +
   #   JASPgraphs::geom_line() +
@@ -911,7 +1050,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   #   plot <- plot + 
   #     ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
   # }
-  # 
+
   xr   <- range(df$x)
   idx  <- which.max(df$y)
   xmax <- df$x[idx]
@@ -925,38 +1064,37 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                 BF = BF,
                                 CRI = CRI,
                                 bfType = bfType,
-                                xName = xlab
-                                )
-  
+                                xName = xlab)
 
-  .extraPost <- function(plot){
-      plot <- plot + 
-        ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
+  .extraPost <- function(plot, int, xPost, yPost){
       
-      if(options$shade){
-        plot <- plot +
-          ggplot2::stat_function(fun = mPost,
-                                 xlim = int,
-                                 geom = "area", alpha = alpha, show.legend = F, size = 0, fill = "grey")
-      }
-      
-      if(options$addLines){
-        plot <- plot + 
-          ggplot2::scale_linetype_manual(values = valuesLine)
-      }  
-      
-      plot <- plot +
-              ggplot2::scale_linetype_manual("", values = valuesLine, labels = labelsModel) +
-              ggplot2::scale_color_manual("", values = valuesCol, labels = labelsModel) +
-              ggplot2::theme(legend.text.align = 0,
-                             legend.position = legend.position)
-      return(plot)
+    plot <- plot + ggplot2::geom_segment(x = 0, y = 0, xend = 0, yend = Inf, linetype = "dotted", color = "black")
+    
+    if(options[["shade"]]){
+      shadeData <- data.frame(x = xPost[xPost < max(int) & xPost > min(int)], y = yPost[xPost < max(int) & xPost > min(int)])
+      plot <- plot + ggplot2::geom_area(data = shadeData, mapping = ggplot2::aes(x = x, y = y), fill = "grey", group = 1, linetype = 1, color = NA, alpha = 0.5)
+    }
+    
+    if(options[["addLines"]] && options[["modelSpecification"]] == "BMA"){
+      plot <- plot + ggplot2::scale_linetype_manual(values = valuesLine)
+    }  
+    
+    plot <- plot +
+            ggplot2::scale_linetype_manual("", values = valuesLine, labels = labelsModel) +
+            ggplot2::scale_color_manual("", values = valuesCol, labels = labelsModel) +
+            ggplot2::theme(legend.text.align = 0,
+                            legend.position = legend.position)
+    return(plot)
   }
-  
-  ifelse(options$addInfo, 
-         plot$subplots$mainGraph <- .extraPost(plot$subplots$mainGraph), 
-         plot <- .extraPost(plot))
-  
+
+  if(options[["addInfo"]]){
+    plot$subplots$mainGraph <- plot$subplots$mainGraph + ggplot2::scale_x_continuous(name = xlab, breaks = JASPgraphs::getPrettyAxisBreaks(c(0, xPost)))
+    plot$subplots$mainGraph <- .extraPost(plot$subplots$mainGraph, int, xPost, yPost)
+  } else {
+    plot <- plot + ggplot2::scale_x_continuous(name = xlab, breaks = JASPgraphs::getPrettyAxisBreaks(c(0, xPost)))
+    plot <- .extraPost(plot, int, xPost, yPost)
+  }
+
   postPlot$plotObject <- plot
   return()
 }
@@ -1001,27 +1139,24 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     forestPlot$dependOn(c("plotForestObserved", "plotForestEstimated", "plotForestBoth", 
                           "checkForestPlot", "ascendingForest", "labelForest",
                           "orderForest"))
+    forestPlot$position <- 1
     .bmaFillForestPlot(forestPlot, jaspResults, dataset, options, studyLabels)
     # Add plot to container
     forestContainer[["forestPlot"]] <- forestPlot
   }
   
-  
-  
-  
   if(options$plotCumForest){
     cumForestPlot <- createJaspPlot(plot = NULL, title = "Cumulative forest plot", height = height, width = width)
     cumForestPlot$dependOn("plotCumForest")
+    cumForestPlot$position <- 2
     .bmaFillCumForest(cumForestPlot, jaspResults, dataset, options, studyLabels, dependencies)
     forestContainer[["cumForestPlot"]] <- cumForestPlot
   }
-  
-  
 }
 
 .bmaFillForestPlot <- function(forestPlot, jaspResults, dataset, options, studyLabels){
   # Get analysis results from jasp state
-  m <- jaspResults[["bmaResults"]]$object
+  bmaResults <- .bmaResultsState(jaspResults, dataset, options, dependencies)
   
   # Create effect size and standard error variable and make dataframe
   varES <- dataset[, .v(options[["effectSize"]])]
@@ -1041,15 +1176,15 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Assign weights for the estimated point sizes
   # Should be different for ordered analysis
-  se_estimated <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "se_mean"]
-  
   if(options[["modelSpecification"]] == "CRE"){
-    se_estimated <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[3:(length(varES) + 2), "se_mean"]
+    se_estimated <- bmaResults[["ordered"]]$summary[3:(length(varES) + 2), "se_mean"]
+  } else {
+    se_estimated <- bmaResults[["random"]]$summary[3:(length(varES) + 2), "se_mean"]
   }
   
   weight_estimated <- 1 / se_estimated^2
   weight_estimated_scaled <- ((4 - 1) * (weight_estimated - min(weight_estimated))) / (
-    max(weight_estimated) - min(weight_estimated)) + 2
+  max(weight_estimated) - min(weight_estimated)) + 2
   
   # Create text object for next to the observed points
   ci <- .95
@@ -1066,15 +1201,15 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Get estimated points and CI's
   if(options$modelSpecification == "BMA" || options$modelSpecification == "RE" || options$modelSpecification == "CRE"){
-    mean_estimates <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "mean"]
-    lower_estimates <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "2.5%"]
-    upper_estimates <- rstan::summary(m$meta$random$stanfit_dstudy)$summary[3:(length(varES) + 2), "97.5%"]
+    mean_estimates <- bmaResults[["random"]]$summary[3:(length(varES) + 2), "mean"]
+    lower_estimates <- bmaResults[["random"]]$summary[3:(length(varES) + 2), "2.5%"]
+    upper_estimates <- bmaResults[["random"]]$summary[3:(length(varES) + 2), "97.5%"]
   } 
   # The estimates for the ordered analysis are not always saved
   if(options$modelSpecification == "CRE"){
-    mean_estimates <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[1:length(varES) + 2, "mean"]
-    lower_estimates <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[1:length(varES) + 2, "2.5%"]
-    upper_estimates <- rstan::summary(m$meta$ordered$stanfit_dstudy)$summary[1:length(varES) + 2, "97.5%"]
+    mean_estimates <- bmaResults[["ordered"]]$summary[1:length(varES) + 2, "mean"]
+    lower_estimates <- bmaResults[["ordered"]]$summary[1:length(varES) + 2, "2.5%"]
+    upper_estimates <- bmaResults[["ordered"]]$summary[1:length(varES) + 2, "97.5%"]
   }
   
   # Create text object for estimated points
@@ -1087,10 +1222,6 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                             "]",
                             sep = "")
   }
-  
-  
-  
-  
   
   # Make index for model diamond
   modelIndex <- .bmaGetModelName(options)
@@ -1106,9 +1237,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   }
   
   # Create diamond for averaged or ordered model
-  meanMain <- m$estimates[modelIndex, "mean"]
-  lowerMain <- m$estimates[modelIndex, "2.5%"]
-  upperMain <- m$estimates[modelIndex, "97.5%"]
+  meanMain <- bmaResults[["bma"]]$estimates[modelIndex, "mean"]
+  lowerMain <- bmaResults[["bma"]]$estimates[modelIndex, "2.5%"]
+  upperMain <- bmaResults[["bma"]]$estimates[modelIndex, "97.5%"]
   if(modelIndex == "ordered"){
     yMain <- yDiamond[2]
   } else if(options$modelSpecification == "BMA"){
@@ -1127,9 +1258,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   
   # Create diamond for fixed model
-  meanFixed <- m$estimates["fixed", "mean"]
-  lowerFixed <- m$estimates["fixed", "2.5%"]
-  upperFixed <- m$estimates["fixed", "97.5%"]
+  meanFixed <- bmaResults[["bma"]]$estimates["fixed", "mean"]
+  lowerFixed <- bmaResults[["bma"]]$estimates["fixed", "2.5%"]
+  upperFixed <- bmaResults[["bma"]]$estimates["fixed", "97.5%"]
   yFixed <- yDiamond[1]
   
   d.fixed <- data.frame(x = c(lowerFixed, meanFixed,
@@ -1142,9 +1273,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                        sprintf('%.2f', upperFixed), "]")
   
   # Create diamond for random model
-  meanRandom <- m$estimates["random", "mean"]
-  lowerRandom <- m$estimates["random", "2.5%"]
-  upperRandom <- m$estimates["random", "97.5%"]
+  meanRandom <- bmaResults[["bma"]]$estimates["random", "mean"]
+  lowerRandom <- bmaResults[["bma"]]$estimates["random", "2.5%"]
+  upperRandom <- bmaResults[["bma"]]$estimates["random", "97.5%"]
   if(options$modelSpecification == "RE"){
     yRandom <- -0.5
   } else if(options$modelSpecification == "BMA"){
@@ -1217,7 +1348,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                            ggplot2::aes(x = effectSize,
                                         y = y)) +
     # Add dotted vertical line at x = 0
-    ggplot2::geom_vline(xintercept = 0, linetype = "dotted")+
+    ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
     
     # Add observed or estimated points with CI, and text
     ggplot2::geom_point(shape = shape, size = df$weight_scaled) +
@@ -1271,17 +1402,15 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   
   # Add jasp theme to plot
-  plot <- themeJasp(plot,
-                    yAxis = FALSE)
+  plot <- JASPgraphs::themeJasp(plot, yAxis = FALSE)
   
   # Add other theme elements (no y axis and aligning y axis labels)
   plot <- plot +
-    ggplot2::theme(axis.title.y = ggplot2::element_blank(),
-                   axis.line.y = ggplot2::element_blank(),
-                   axis.ticks.y = ggplot2::element_blank(),
-                   axis.text.y = ggplot2::element_text(hjust = 0),
-                   axis.text.y.right = ggplot2::element_text(hjust = 1),
-    )
+          ggplot2::theme(axis.title.y = ggplot2::element_blank(),
+                        axis.line.y = ggplot2::element_blank(),
+                        axis.ticks.y = ggplot2::element_blank(),
+                        axis.text.y = ggplot2::element_text(hjust = 0),
+                        axis.text.y.right = ggplot2::element_text(hjust = 1))
   
   if(options$forestPlot == "plotForestBoth"){
     plot <- plot + ggplot2::theme(
@@ -1348,17 +1477,15 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                                              labels = text))
   
   # Add jasp theme to plot
-  plot <- themeJasp(plot,
-                    yAxis = FALSE)
+  plot <- JASPgraphs::themeJasp(plot, yAxis = FALSE)
   
   # Add other theme elements (no y axis and aligning y axis labels)
   plot <- plot +
-    ggplot2::theme(axis.title.y = ggplot2::element_blank(),
-                   axis.line.y = ggplot2::element_blank(),
-                   axis.ticks.y = ggplot2::element_blank(),
-                   axis.text.y = ggplot2::element_text(hjust = 0),
-                   axis.text.y.right = ggplot2::element_text(hjust = 1)
-    )
+          ggplot2::theme(axis.title.y = ggplot2::element_blank(),
+                        axis.line.y = ggplot2::element_blank(),
+                        axis.ticks.y = ggplot2::element_blank(),
+                        axis.text.y = ggplot2::element_text(hjust = 0),
+                        axis.text.y.right = ggplot2::element_text(hjust = 1))
   
   
   cumForestPlot$plotObject <- plot
@@ -1382,6 +1509,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(options$plotSequential){
     seqPlot <- createJaspPlot(plot = NULL, title = "Bayes factors", height = 400, width = 530)
     seqPlot$dependOn(c("plotSequential", "BF")) 
+    seqPlot$position <- 1
     seqContainer[["seqPlot"]] <- seqPlot
     .bmaFillSeqPlot(seqPlot, jaspResults, dataset, options, dependencies)
   }
@@ -1389,6 +1517,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(options$plotSeqPM){
     seqPMPlot <- createJaspPlot(plot = NULL, title = "Posterior model probabilities", height = 400, width = 530)
     seqPMPlot$dependOn("plotSeqPM")
+    seqPMPlot$position <- 2
     .bmaFillSeqPM(seqPMPlot, jaspResults, dataset, options, dependencies)
     seqContainer[["seqPMPlot"]] <- seqPMPlot
   }
@@ -1414,18 +1543,14 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(nrow(dataset) < 40) plotLineOrPoint <- "point" else plotLineOrPoint <- "line"
   
   df <- data.frame(x = 1:nrow(dataset), y = log(BFs))
-  # }
   
   plot <- JASPgraphs::PlotRobustnessSequential(dfLines = df,
                                                plotLineOrPoint = plotLineOrPoint,
                                                xName = "Number of studies",
                                                BF = BFs[nrow(dataset)],
                                                bfType = bfType,
-                                               hasRightAxis = TRUE
-  )
+                                               hasRightAxis = TRUE)
   
-  
-  # plot + ggplot2::coord_flip()
   seqPlot$plotObject <- plot
   return()
 }
@@ -1435,72 +1560,80 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   x     <- 0:n
   x     <- x[-2]
   dfPMP <- data.frame(prob = 0, g = rep(c("FE0", "FE1", "RE0", "RE1"), each = n))
-  m     <- .bmaResultsState(jaspResults, dataset, options, dependencies)
-  pM    <- m$prior_models
+  bmaResults     <- .bmaResultsState(jaspResults, dataset, options, dependencies)
+  pM    <- bmaResults[["models"]]$prior
   
   dfPMP[c(1, 1 + n, 1 + 2*n, 1 + 3*n), 1] <- pM
   
   rowResults <- .bmaSequentialResults(jaspResults, dataset, options, dependencies)
-  
+
   for(i in 2:nrow(dataset)){
-    posterior_models <- rowResults$posterior_models[i]
-    
-    if(options$modelSpecification == "BMA" || options$modelSpecification == "CRE")
-      dfPMP[c(i, i + n, i + 2*n, i + 3*n), 1] <- posterior_models
-    
-    if(options$modelSpecification == "FE")
-      dfPMP[c(i, i + n), 1] <- posterior_models[1:2]
-    
-    if(options$modelSpecification == "RE")
-      dfPMP[c(i, i + n), 1] <- posterior_models[3:4]
+    posterior_models <- rowResults$posterior_models[[i]]
+    dfPMP[c(i, i + n, i + 2*n, i + 3*n), 1] <- posterior_models
+  }
+
+  if(options[["modelSpecification"]] == "BMA" || options[["modelSpecification"]] == "CRE"){
+
+    labels <- c(expression("Fixed H"[0]), expression("Fixed H"[1]), expression("Random H"[0]), expression("Random H"[1]))
+    colorValues <- c("#fcae91ff", "#fcae91ff", "#009E73", "#009E73")
+    linetypeValues <- rep("solid", 4)
+    pointValues <- c(21, 19, 21, 19)
+    lineValues <- c("dotted", "solid", "dotted", "solid")
+
+  } else if(options[["modelSpecification"]] == "FE"){
+
+    labels <- c(expression("Fixed H"[0]), expression("Fixed H"[1]))
+    colorValues <- c("#fcae91ff", "#fcae91ff")
+    linetypeValues <- rep("solid", 2)
+    pointValues <- c(21, 19)
+    lineValues <- c("dotted", "solid")
+    dfPMP <- subset(dfPMP, dfPMP$g == "FE0" | dfPMP$g == "FE1")
+
+  } else if(options[["modelSpecification"]] == "RE"){
+
+    labels <- c(expression("Random H"[0]), expression("Random H"[1]))
+    colorValues <- c("#009E73", "#009E73")
+    linetypeValues <- rep("solid", 2)
+    pointValues <- c(21, 19)
+    lineValues <- c("dotted", "solid")
+    dfPMP <- subset(dfPMP, dfPMP$g == "RE0" | dfPMP$g == "RE1")
+
   }
   
-  gridLines <- makeGridLines(x = 0,
-                             y = c(0.25, 0.5, 0.75),
-                             xend = nrow(dataset),
-                             colour = rep("gray", 3),
-                             linetype = rep("dashed", 3))
-  
+  gridLines <- ggplot2::geom_segment(
+                data        = data.frame(x = 0, y = c(0, 0.25, 0.5, 0.75, 1), xend = nrow(dataset)),
+                mapping     = ggplot2::aes(x = x, y = y, xend = xend, yend = y),
+                inherit.aes = FALSE,
+                colour      = rep("gray", 5),
+                linetype    = rep("dashed", 5),
+                size        = 0.85)
+
   df <- data.frame(x = x, y = dfPMP$prob, g = dfPMP$g)
   plot <- ggplot2::ggplot(df, ggplot2::aes(x = x, y = y, colour = g, linetype = g)) +
     gridLines + 
     ggplot2::geom_line(size = 1.5) +
     ggplot2::scale_y_continuous(limits = c(0,1.25), breaks = c(0, .25, .5, .75, 1)) +
+    ggplot2::scale_x_continuous(breaks = JASPgraphs::getPrettyAxisBreaks(0:nrow(dataset), min.n = 4)) +
     ggplot2::guides(colour = ggplot2::guide_legend(ncol = 2)) +
     ggplot2::theme(legend.spacing.x = ggplot2::unit(0.35, 'cm')) +
     ggplot2::labs(x = "Number of studies", y = "Posterior model \n probability") + 
     ggplot2::scale_colour_manual(name = "",
-                                 labels = c(expression("Fixed H"[0]),
-                                            expression("Fixed H"[1]),
-                                            expression("Random H"[0]),
-                                            expression("Random H"[1])),
-                                 values = c("#fcae91ff", "#fcae91ff", "#009E73", "#009E73")) +
+                                 labels = labels,
+                                 values = colorValues) +
     ggplot2::scale_linetype_manual(name = "",
-                                   labels = c(expression("Fixed H"[0]),
-                                              expression("Fixed H"[1]),
-                                              expression("Random H"[0]),
-                                              expression("Random H"[1])),
-                                   values = rep("solid", 4))
-  
+                                   labels = labels,
+                                   values = linetypeValues)
+
   if(nrow(dataset) < 40) {
-    plot <- plot + ggplot2::geom_point(ggplot2::aes(shape = dfPMP$g), size = 3,
-                                                            fill = "white") +
-    ggplot2::scale_shape_manual(name = "", values = c(21, 19, 21, 19),
-                                labels = c(expression("Fixed H"[0]),
-                                           expression("Fixed H"[1]),
-                                           expression("Random H"[0]),
-                                           expression("Random H"[1])))
+    plot <- plot + 
+            ggplot2::geom_point(ggplot2::aes(shape = dfPMP$g), size = 3, fill = "white") +
+            ggplot2::scale_shape_manual(name = "", values = pointValues, labels = labels)
   } else {
     plot <- plot + 
-      ggplot2::scale_linetype_manual(name = "",
-                                     values = c("dotted", "solid", "dotted", "solid"),
-                                     labels = c(expression("Fixed H"[0]),
-                                                expression("Fixed H"[1]),
-                                                expression("Random H"[0]),
-                                                expression("Random H"[1])))
+            ggplot2::scale_linetype_manual(name = "", values = lineValues, labels = labels)
   }
   
-  plot <- themeJasp(plot, legend.position = "top")
+  plot <- JASPgraphs::themeJasp(plot, legend.position = "top")
   
   seqPMPlot$plotObject <- plot
   return()                              
