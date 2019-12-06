@@ -23,19 +23,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   ready <- options[["effectSize"]] != "" && (options[["standardError"]] != "" || (all(unlist(options$confidenceInterval) != "")  && !is.null(unlist(options[["confidenceInterval"]])))) 
   
   # Dependencies: basically everything
-  dependencies <- c("effectSize", "standardError", "confidenceInterval","studyLabels", "modelSpecification",
-                    "allPos", "allNeg",
-                    "priorH0FE", "priorH1FE", "priorH0RE", "priorH1RE",
-                    "priorES", "cauchy", "normal", "t",
-                    "informativeCauchyLocation", "informativeCauchyScale",
-                    "checkLowerPrior", "checkUpperPrior",
-                    "lowerTrunc", "upperTrunc",
-                    "informativeNormalMean", "informativeNormalStd",
-                    "informativeTLocation", "informativeTScale", "informativeTDf",
-                    "priorSE", "inverseGamma", "inverseGammaShape", "inverseGammaScale",
-                    "halfT", "informativehalfTScale", "informativehalfTDf",
-                    "BFComputation", "integration", "bridgeSampling", "iterBridge",
-                    "iterMCMC", "chainsMCMC", "seed", "seedBox")
+  dependencies <- .bmaGetDependencies()
   
   # Dataset with effectSize, standardError, and studyLabels
   # If data is null stuff is missing
@@ -76,6 +64,19 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(options$plotSequential || options$plotSeqPM){
     .bmaSequentialPlot(jaspResults, dataset, options, ready, dependencies)
   }
+}
+
+.bmaGetDependencies <- function(){
+  dependencies <- c("effectSize", "standardError", "confidenceInterval", "modelSpecification",
+                      "allPos", "allNeg", "priorH0FE", "priorH1FE", "priorH0RE", "priorH1RE",
+                      "priorES", "informativeCauchyLocation", "informativeCauchyScale",
+                      "checkLowerPrior", "checkUpperPrior", "lowerTrunc", "upperTrunc",
+                      "informativeNormalMean", "informativeNormalStd",
+                      "informativeTLocation", "informativeTScale", "informativeTDf",
+                      "priorSE", "inverseGammaShape", "inverseGammaScale",
+                      "informativehalfTScale", "informativehalfTDf",
+                      "BFComputation", "iterBridge", "iterMCMC", "chainsMCMC", "seed", "seedBox")
+  return(dependencies)
 }
 
 # Get dataset
@@ -672,7 +673,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 .bmaEffectSizeTable <- function(jaspResults, dataset, options, ready, dependencies) {
   if (!is.null(jaspResults[["esTable"]])) return()
   esTable <- createJaspTable(title = "Effect Sizes per Study")
-  esTable$dependOn(c(dependencies, "esTable"))
+  esTable$dependOn(c(dependencies, "esTable", "studyLabels"))
   esTable$position <- 3
   
   # Add standard columns
@@ -1102,7 +1103,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 # Plot: Forest plot
 .bmaForestPlot <- function(jaspResults, dataset, options, ready, dependencies) {
   forestContainer <- createJaspContainer(title = "Forest Plot")
-  forestContainer$dependOn(dependencies)
+  forestContainer$dependOn(c(dependencies, "studyLabels"))
   jaspResults[["forestContainer"]] <- forestContainer
   jaspResults[["forestContainer"]]$position <- 6
   
@@ -1344,26 +1345,13 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   } 
   
   # Create plot
-  plot <-  ggplot2::ggplot(df,
-                           ggplot2::aes(x = effectSize,
-                                        y = y)) +
-    # Add dotted vertical line at x = 0
-    ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
-    
-    # Add observed or estimated points with CI, and text
-    ggplot2::geom_point(shape = shape, size = df$weight_scaled) +
-    ggplot2::geom_errorbarh(ggplot2::aes(xmin = df$lower, xmax = df$upper), height = .2) +
-    
-    # Add text on the right as secondary axis
-    ggplot2::scale_y_continuous(breaks = c(df$y, 
-                                           yDiamond),
-                                labels = c(as.character(df$studyLabels), model),
-                                sec.axis = ggplot2::sec_axis(~ .,
-                                                             breaks = c(df$y, yDiamond),
-                                                             labels = c(as.character(df$text), textDiamond))) +
-    
-    # Name of x axis
-    ggplot2::xlab(expression("Effect size "*mu))
+  plot <-  ggplot2::ggplot(df, ggplot2::aes(x = effectSize, y = y)) +
+            ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
+            ggplot2::geom_errorbarh(ggplot2::aes(xmin = df$lower, xmax = df$upper), height = .2) +
+            ggplot2::geom_point(shape = shape, size = df$weight_scaled) +
+            ggplot2::scale_y_continuous(breaks = c(df$y, yDiamond), labels = c(as.character(df$studyLabels), model),
+              sec.axis = ggplot2::sec_axis(~ ., breaks = c(df$y, yDiamond), labels = c(as.character(df$text), textDiamond)), expand = c(0, 0.5)) +
+            ggplot2::xlab(expression("Effect size "*mu))
   
   if(options$forestPlot == "plotForestBoth"){
     dfBoth <- data.frame(effectSize = c(varES, mean_estimates),
@@ -1374,43 +1362,27 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                          text = c(text_observed, text_estimated),
                          g = rep(c("Observed", "Estimated"), each = length(varES)))
     
-    plot <-  ggplot2::ggplot(dfBoth,
-                             ggplot2::aes(x = effectSize,
-                                          y = y)) +
-      ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
-      ggplot2::geom_point(ggplot2::aes(shape = as.factor(dfBoth$g), colour = as.factor(dfBoth$g)), size = dfBoth$weight_scaled) +
-      ggplot2::geom_errorbarh(ggplot2::aes(xmin = dfBoth$lower, xmax = dfBoth$upper, colour = as.factor(dfBoth$g),), height = .1, show.legend = FALSE) +
-      # Add estimated axis labels
-      ggplot2::scale_y_continuous(breaks = c(df$y,
-                                             yDiamond),
-                                  labels = c(as.character(df$studyLabels), model),
-                                  sec.axis = ggplot2::sec_axis(~ .,
-                                                               breaks = c(df$y,
-                                                                          yEst,
-                                                                          yDiamond),
-                                                               labels = c(text_observed,
-                                                                          text_estimated,
-                                                                          textDiamond))) +
-      ggplot2::scale_color_manual("", values = c("slategrey", "black"), labels = c("Estimated", "Observed")) +
-      ggplot2::scale_shape_manual("", values = c(16, 15)) +
-      ggplot2::guides(shape = ggplot2::guide_legend(reverse=TRUE, override.aes = list(size=3)),
-                      colour = ggplot2::guide_legend(reverse=TRUE)) +
-      # Adjust colour of secondary axis
-      ggplot2::theme(axis.text.y.right = ggplot2::element_text(colour = c(rep(c("black", "slategrey"), each = nrow(df)), rep("black", 3)))) +
-      ggplot2::xlab(expression("Effect size "*mu))
+    plot <-  ggplot2::ggplot(dfBoth, ggplot2::aes(x = effectSize, y = y)) +
+              ggplot2::geom_vline(xintercept = 0, linetype = "dotted") +
+              ggplot2::geom_point(ggplot2::aes(shape = as.factor(dfBoth$g), colour = as.factor(dfBoth$g)), size = dfBoth$weight_scaled) +
+              ggplot2::geom_errorbarh(ggplot2::aes(xmin = dfBoth$lower, xmax = dfBoth$upper, colour = as.factor(dfBoth$g)), height = .1, show.legend = FALSE) +
+              ggplot2::scale_y_continuous(breaks = c(df$y, yDiamond), labels = c(as.character(df$studyLabels), model),
+                                          sec.axis = ggplot2::sec_axis(~ ., breaks = c(df$y, yEst, yDiamond), labels = c(text_observed, text_estimated, textDiamond))) +
+              ggplot2::scale_color_manual("", values = c("slategrey", "black"), labels = c("Estimated", "Observed")) +
+              ggplot2::scale_shape_manual("", values = c(16, 15)) +
+              ggplot2::guides(shape = ggplot2::guide_legend(reverse=TRUE, override.aes = list(size=3)), colour = ggplot2::guide_legend(reverse=TRUE)) +
+              ggplot2::theme(axis.text.y.right = ggplot2::element_text(colour = c(rep(c("black", "slategrey"), each = nrow(df)), rep("black", 3)))) +
+              ggplot2::xlab(expression("Effect size "*mu))
   }
-  
-  
-  # Add jasp theme to plot
+
   plot <- JASPgraphs::themeJasp(plot, yAxis = FALSE)
   
   # Add other theme elements (no y axis and aligning y axis labels)
-  plot <- plot +
-          ggplot2::theme(axis.title.y = ggplot2::element_blank(),
-                        axis.line.y = ggplot2::element_blank(),
-                        axis.ticks.y = ggplot2::element_blank(),
-                        axis.text.y = ggplot2::element_text(hjust = 0),
-                        axis.text.y.right = ggplot2::element_text(hjust = 1))
+  plot <- plot + ggplot2::theme(axis.title.y = ggplot2::element_blank(),
+                                axis.line.y = ggplot2::element_blank(),
+                                axis.ticks.y = ggplot2::element_blank(),
+                                axis.text.y = ggplot2::element_text(hjust = 0),
+                                axis.text.y.right = ggplot2::element_text(hjust = 1))
   
   if(options$forestPlot == "plotForestBoth"){
     plot <- plot + ggplot2::theme(
@@ -1421,14 +1393,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     )
   }
   # Add the model diamond
-  plot <- plot +
-    ggplot2::geom_polygon(data = d, ggplot2::aes(x = x, y = y))
+  plot <- plot + ggplot2::geom_polygon(data = d, ggplot2::aes(x = x, y = y))
   
   # Add the diamonds of the other models for BMA or ordered analysis
   if(options$modelSpecification == "BMA" || options$modelSpecification == "CRE"){
-    plot <- plot +
-      ggplot2::geom_polygon(data = d.fixed, ggplot2::aes(x = x, y = y)) +
-      ggplot2::geom_polygon(data = d.random, ggplot2::aes(x = x, y = y))
+    plot <- plot + ggplot2::geom_polygon(data = d.fixed, ggplot2::aes(x = x, y = y)) +
+                    ggplot2::geom_polygon(data = d.random, ggplot2::aes(x = x, y = y))
   }
   
   forestPlot$plotObject <- plot
@@ -1457,40 +1427,25 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   df <- data.frame(effectSize = meanMain, studyLabels = studyLabels, y = length(meanMain):1)
   
-  plot <-  ggplot2::ggplot(df,
-                           ggplot2::aes(x = effectSize,
-                                        y = y))+
-    # Add dotted vertical line at x = 0
-    ggplot2::geom_vline(xintercept = 0, linetype = "dotted")+
-    
-    # Add observed or estimated points with CI, and text
-    ggplot2::geom_point(shape = 16, size = 4) +
-    ggplot2::geom_errorbarh(ggplot2::aes(xmin = lowerMain, xmax = upperMain), height = .2) +
-    
-    # Name of x axis
-    ggplot2::xlab(expression("Overall effect size "*mu)) +
-    
-    ggplot2::scale_y_continuous(breaks = df$y,
-                                labels = studyLabels,
-                                sec.axis = ggplot2::sec_axis(~ .,
-                                                             breaks = df$y,
-                                                             labels = text))
+  plot <-  ggplot2::ggplot(df, ggplot2::aes(x = effectSize, y = y))+
+            ggplot2::geom_vline(xintercept = 0, linetype = "dotted")+
+            ggplot2::geom_errorbarh(ggplot2::aes(xmin = lowerMain, xmax = upperMain), height = .2) +
+            ggplot2::geom_point(shape = 16, size = 4) +
+            ggplot2::xlab(expression("Overall effect size "*mu)) + 
+            ggplot2::scale_y_continuous(breaks = df$y, labels = studyLabels, expand = c(0, 0.5),
+                                        sec.axis = ggplot2::sec_axis(~ ., breaks = df$y, labels = text))
   
-  # Add jasp theme to plot
   plot <- JASPgraphs::themeJasp(plot, yAxis = FALSE)
   
   # Add other theme elements (no y axis and aligning y axis labels)
-  plot <- plot +
-          ggplot2::theme(axis.title.y = ggplot2::element_blank(),
-                        axis.line.y = ggplot2::element_blank(),
-                        axis.ticks.y = ggplot2::element_blank(),
-                        axis.text.y = ggplot2::element_text(hjust = 0),
-                        axis.text.y.right = ggplot2::element_text(hjust = 1))
-  
+  plot <- plot + ggplot2::theme(axis.title.y = ggplot2::element_blank(),
+                                axis.line.y = ggplot2::element_blank(),
+                                axis.ticks.y = ggplot2::element_blank(),
+                                axis.text.y = ggplot2::element_text(hjust = 0),
+                                axis.text.y.right = ggplot2::element_text(hjust = 1))
   
   cumForestPlot$plotObject <- plot
-  return()
-  
+  return() 
 }
 
 .bmaSequentialPlot <- function(jaspResults, dataset, options, ready, dependencies) {
@@ -1539,11 +1494,16 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   } else {
     bfType <- "BF10" 
   }
+
+  if(any(is.infinite(BFs))){
+    seqPlot$setError("Plotting failed: The Bayes factors contain infinity.")
+    return()
+  }
   
   if(nrow(dataset) < 40) plotLineOrPoint <- "point" else plotLineOrPoint <- "line"
   
   df <- data.frame(x = 1:nrow(dataset), y = log(BFs))
-  
+
   plot <- JASPgraphs::PlotRobustnessSequential(dfLines = df,
                                                plotLineOrPoint = plotLineOrPoint,
                                                xName = "Number of studies",
