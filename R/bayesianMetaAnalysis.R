@@ -159,6 +159,18 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   d <- metaBMA::prior(familyES, paramES, lowerES, upperES)
   tau <- metaBMA::prior(familySE, paramSE, 0)
   
+  if(options$direction == "allPos"){
+    x <- seq(-1, -1e-05, 0.001)
+    if(any(d(x) > 0)
+      JASP::.quitAnalysis("Your prior contains negative values.")
+  } 
+  if(options$direction == "allNeg"){
+    x <- seq(1e-05, 1, 0.001)
+    if(any(d(x) > 0)
+       JASP::.quitAnalysis("Your prior contains positive values.")
+  } 
+
+  
   # Save priors
   jaspResults[["bmaPriors"]] <- createJaspState(
     object=list(d = d, tau = tau),
@@ -381,6 +393,13 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   return("fixed")
 }
 
+.bmaCalculateBFHeterogeneity <- function(prior_models, posterior_models){
+  postOdds <- (posterior_models["random_H0"] + posterior_models["random_H1"]) / (posterior_models["fixed_H0"] + posterior_models["fixed_H1"])
+  priorOdds <- (prior_models[3] + prior_models[4]) / (prior_models[1] + prior_models[2])
+  BFheterogeneity <- postOdds/priorOdds
+  return(BFheterogeneity)
+}
+
 .bmaSequentialResults <- function(jaspResults, dataset, options, dependencies) {
   
   if(!is.null(jaspResults[["bmaSeqResults"]])) return(jaspResults[["bmaSeqResults"]]$object)
@@ -388,7 +407,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   startProgressbar(nrow(dataset)-1)
   
   seqResults <- list(mean=numeric(), lowerMain=numeric(), upperMain=numeric(), 
-                     BFs=numeric(1), posterior_models=list()) 
+                     BFs=numeric(1), posterior_models=list(), BFsHeterogeneity = numeric(1)) 
   
   d                       <- .bmaPriors(jaspResults, options)[["d"]]
   # Fix voor truncated priors
@@ -412,6 +431,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     if(options[["modelSpecification"]] == "CRE") seqResults$BFs[i] <- bmaResults$BF["ordered", "null"]
     
     seqResults$posterior_models[[i]] <- bmaResults$posterior_models
+    
+    seqResults$BFsHeterogeneity[[i]] <- .bmaCalculateBFHeterogeneity(bmaResults$prior_models, bmaResults$posterior_models)
+    
     progressbarTick()
   }
   
@@ -1462,30 +1484,40 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   # Fill posterior plot effect size
   if(options$plotSequential){
-    seqPlot <- createJaspPlot(plot = NULL, title = "Bayes factors", height = 400, width = 530)
-    seqPlot$dependOn(c("plotSequential", "BF")) 
-    seqPlot$position <- 1
-    seqContainer[["seqPlot"]] <- seqPlot
-    .bmaFillSeqPlot(seqPlot, jaspResults, dataset, options, dependencies)
+    seqPlotES <- createJaspPlot(plot = NULL, title = "Bayes factors effect size", height = 400, width = 530)
+    seqPlotES$dependOn(c("plotSequential", "BF")) 
+    seqPlotES$position <- 1
+    seqContainer[["seqPlotES"]] <- seqPlotES
+    .bmaFillSeqPlot(seqPlot, jaspResults, dataset, options, dependencies, type = "ES")
+    if(!options$modelSpecification == "FE"){
+      seqPlotSE <- createJaspPlot(plot = NULL, title = "Bayes factors heterogeneity", height = 400, width = 530)
+      seqPlotSE$dependOn(c("plotSequential", "BF")) 
+      seqPlotSE$position <- 2
+      seqContainer[["seqPlotSE"]] <- seqPlotSE
+      .bmaFillSeqPlot(seqPlot, jaspResults, dataset, options, dependencies, type = "SE")
+    }
   }
   
   if(options$plotSeqPM){
     seqPMPlot <- createJaspPlot(plot = NULL, title = "Posterior model probabilities", height = 400, width = 530)
     seqPMPlot$dependOn("plotSeqPM")
-    seqPMPlot$position <- 2
+    seqPMPlot$position <- 3
     .bmaFillSeqPM(seqPMPlot, jaspResults, dataset, options, dependencies)
     seqContainer[["seqPMPlot"]] <- seqPMPlot
   }
   
 }
 
-.bmaFillSeqPlot <- function(seqPlot, jaspResults, dataset, options, dependencies){
+.bmaFillSeqPlot <- function(seqPlot, jaspResults, dataset, options, dependencies, type){
   
   rowResults <- .bmaSequentialResults(jaspResults, dataset, options, dependencies)
-  
-  BFs <- rowResults$BFs
-  BFs[1] <- 1
-  
+  if(type == "ES"){
+    BFs <- rowResults$BFs
+  } else if(type == "SE"){
+    Bfs <- rowResults$BFsHeterogeneity
+  }
+  BFs[1] <- 1  
+    
   if(options$BF == "BF01") {
     BFs    <- 1/BFs
     bfType <- "BF01"

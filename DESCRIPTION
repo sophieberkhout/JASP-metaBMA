@@ -2,7 +2,7 @@ Package: DevelopmentModule
 Type: Package
 Title: Bayesian Meta Analysis Module for JASP
 Version: 0.0.0
-Date: 2019-11-21
+Date: 2019-12-06
 Author: Sophie Berkhout
 Website: 
 Maintainer: Sophie Berkhout <s.w.berkhout@gmail.com>
