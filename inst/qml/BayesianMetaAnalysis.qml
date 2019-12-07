@@ -46,14 +46,13 @@ Form
 			allowedColumns: ["scale"]
 		}
 
-	AssignedVariablesList
+	AssignedPairsVariablesList
 		{
 			id: 			confidenceInterval
 			enabled: 		standardError.count == 0 // Only if no standard error input (only one of the two is necessary)
 			name: 			"confidenceInterval"
 			title: 			qsTr("95% CI Lower and Upper Bound")
 			singleVariable: true
-			listViewType: 	"Pairs"
 			allowedColumns: ["scale"]
 		}
 

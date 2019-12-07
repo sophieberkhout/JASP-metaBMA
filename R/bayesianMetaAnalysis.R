@@ -159,15 +159,15 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   d <- metaBMA::prior(familyES, paramES, lowerES, upperES)
   tau <- metaBMA::prior(familySE, paramSE, 0)
   
-  if(options$direction == "allPos"){
+  if(options[["modelSpecification"]] == "CRE" && options$direction == "allPos"){
     x <- seq(-1, -1e-05, 0.001)
-    if(any(d(x) > 0)
-      JASP::.quitAnalysis("Your prior contains negative values.")
+    if(any(d(x) > 0))
+      JASP:::.quitAnalysis("Your prior contains negative values.")
   } 
-  if(options$direction == "allNeg"){
+  if(options[["modelSpecification"]] == "CRE" && options$direction == "allNeg"){
     x <- seq(1e-05, 1, 0.001)
-    if(any(d(x) > 0)
-       JASP::.quitAnalysis("Your prior contains positive values.")
+    if(any(d(x) > 0))
+       JASP:::.quitAnalysis("Your prior contains positive values.")
   } 
 
   
@@ -1488,13 +1488,13 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     seqPlotES$dependOn(c("plotSequential", "BF")) 
     seqPlotES$position <- 1
     seqContainer[["seqPlotES"]] <- seqPlotES
-    .bmaFillSeqPlot(seqPlot, jaspResults, dataset, options, dependencies, type = "ES")
+    .bmaFillSeqPlot(seqPlotES, jaspResults, dataset, options, dependencies, type = "ES")
     if(!options$modelSpecification == "FE"){
       seqPlotSE <- createJaspPlot(plot = NULL, title = "Bayes factors heterogeneity", height = 400, width = 530)
       seqPlotSE$dependOn(c("plotSequential", "BF")) 
       seqPlotSE$position <- 2
       seqContainer[["seqPlotSE"]] <- seqPlotSE
-      .bmaFillSeqPlot(seqPlot, jaspResults, dataset, options, dependencies, type = "SE")
+      .bmaFillSeqPlot(seqPlotSE, jaspResults, dataset, options, dependencies, type = "SE")
     }
   }
   
@@ -1514,7 +1514,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(type == "ES"){
     BFs <- rowResults$BFs
   } else if(type == "SE"){
-    Bfs <- rowResults$BFsHeterogeneity
+    BFs <- rowResults$BFsHeterogeneity
   }
   BFs[1] <- 1  
     
