@@ -207,6 +207,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   bma[["xPost"]]            <- seq(anchorPoint - 2, anchorPoint + 2, .01)
   bma[["yPost"]]            <- results$posterior_d(bma[["xPost"]])
   bma[["yPrior"]]           <- results$meta$fixed$prior_d(bma[["xPost"]])
+  bma[["dfPointsY"]]        <- data.frame(prior = results$meta$fixed$prior_d(0),
+                                          posterior = results$posterior_d(0))
   bmaResults[["bma"]]       <- bma
 
   # Prior and posterior models
@@ -231,6 +233,9 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   fixed[["xPost"]]          <- seq(anchorPoint - 2, anchorPoint + 2, .01)
   fixed[["yPost"]]          <- results$meta$fixed$posterior_d(fixed[["xPost"]])
   fixed[["yPrior"]]         <- results$meta$fixed$prior_d(fixed[["xPost"]])
+  fixed[["dfPointsY"]]      <- data.frame(prior = results$meta$fixed$prior_d(0),
+                                          posterior = results$meta$fixed$posterior_d(0))
+  
   bmaResults[["fixed"]]     <- fixed
 
   # Random effects model
@@ -247,18 +252,33 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   random[["xPostTau"]]      <- seq(-0.05, anchorPoint + 4, .01)
   random[["yPostTau"]]      <- results$meta$random$posterior_tau(random[["xPostTau"]])
   random[["yPriorTau"]]     <- results$meta$random$prior_tau(random[["xPostTau"]])
+  random[["dfPointsY"]]     <- data.frame(prior = results$meta$random$prior_d(0),
+                                          posterior = results$meta$random$posterior_d(0))
+  
   bmaResults[["random"]]    <- random
 
   # Ordered effects model
   if(options[["modelSpecification"]] == "CRE"){
+    if(options$direction == "allPos") xSeq <- seq(-0.05, anchorPoint + 4, .01)
+    if(options$direction == "allNeg") xSeq <- seq(anchorPoint - 4, 0.05, .01)
+    
     ordered                 <- list()
     ordered[["estimates"]]  <- results$meta$ordered$estimates
     ordered[["summary"]]    <- rstan::summary(results$meta$ordered$stanfit_dstudy)$summary
+    ## Prior and posterior - effect size
+    anchorPoint             <- results$meta$ordered$estimates[2, "mean"]
+    ordered[["xPost"]]   <- xSeq
+    ordered[["yPost"]]   <- results$meta$ordered$posterior_d(ordered[["xPostTau"]])
+    ordered[["yPrior"]]  <- results$meta$ordered$prior_d(ordered[["xPostTau"]])
+    
     ## Prior and posterior - heterogeneity
     anchorPoint             <- results$meta$ordered$estimates[2, "mean"]
     ordered[["xPostTau"]]   <- seq(-0.05, anchorPoint + 4, .01)
-    ordered[["yPostTau"]]   <- results$meta$ordered$posterior_d(ordered[["xPostTau"]])
-    ordered[["yPriorTau"]]  <- results$meta$ordered$prior_d(ordered[["xPostTau"]])
+    ordered[["yPostTau"]]   <- results$meta$ordered$posterior_tau(ordered[["xPostTau"]])
+    ordered[["yPriorTau"]]  <- results$meta$ordered$prior_tau(ordered[["xPostTau"]])
+    ordered[["dfPointsY"]]  <- data.frame(prior = results$meta$ordered$prior_d(0),
+                                          posterior = results$meta$ordered$posterior_d(0))
+    
     bmaResults[["ordered"]] <- ordered
   }
  
@@ -380,7 +400,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   }
   
   if(isTryError(p)){
-    JASP:::.quitAnalysis(paste0("Error while running R code from the metaBMA package: ", JASP:::.extractErrorMessage(p))) 
+    JASP:::.quitAnalysis(paste0("The model could not fit. Error while running R code from the metaBMA package: ", JASP:::.extractErrorMessage(p))) 
   }
 
   return(results)
@@ -425,15 +445,23 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     seqResults$lowerMain[i] <- bmaResults$estimates[modelName, "2.5%"]
     seqResults$upperMain[i] <- bmaResults$estimates[modelName, "97.5%"]
     
-    if(options[["modelSpecification"]] == "BMA") seqResults$BFs[i] <- bmaResults$inclusion$incl.BF
+    if(options[["modelSpecification"]] == "BMA"){
+      seqResults$BFs[i] <- bmaResults$inclusion$incl.BF
+      seqResults$BFsHeterogeneity[[i]] <- .bmaCalculateBFHeterogeneity(bmaResults$prior_models, bmaResults$posterior_models)
+    }
     if(options[["modelSpecification"]] == "FE")  seqResults$BFs[i] <- bmaResults$BF["fixed_H1", "fixed_H0"]
-    if(options[["modelSpecification"]] == "RE")  seqResults$BFs[i] <- bmaResults$BF["random_H1", "random_H0"]
-    if(options[["modelSpecification"]] == "CRE") seqResults$BFs[i] <- bmaResults$BF["ordered", "null"]
+    if(options[["modelSpecification"]] == "RE"){
+      seqResults$BFs[i] <- bmaResults$BF["random_H1", "random_H0"]
+      seqResults$BFsHeterogeneity[[i]] <- bmaResults$BF["random_H1", "fixed_H1"]
+    }
+    if(options[["modelSpecification"]] == "CRE"){
+      seqResults$BFs[i] <- bmaResults$BF["ordered", "null"]
+      seqResults$BFsHeterogeneity[[i]] <- bmaResults$BF["ordered", "fixed"]
+    }
     
     seqResults$posterior_models[[i]] <- bmaResults$posterior_models
     
-    seqResults$BFsHeterogeneity[[i]] <- .bmaCalculateBFHeterogeneity(bmaResults$prior_models, bmaResults$posterior_models)
-    
+
     progressbarTick()
   }
   
@@ -491,10 +519,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     bmaTable$setExpectedSize(2)
   }
   if(options[["modelSpecification"]] == "BMA"){
-    model <- c(modelFE, modelRE, modelRE, modelBMA)
-    parameter <- c(mu, mu, tau, mu)
-    group <- c(T, T, F, T)
-    bmaTable$setExpectedSize(4)
+    model <- c(modelFE, modelRE, modelRE, modelBMA, modelBMA)
+    parameter <- c(mu, mu, tau, mu, tau)
+    group <- c(T, T, F, T, F)
+    bmaTable$setExpectedSize(5)
   }
   if(options[["modelSpecification"]] == "CRE"){
     model <- c(modelFE, modelCRE, modelCRE, modelRE, modelRE)
@@ -534,23 +562,29 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     meanES <- c(bmaResults[["bma"]]$estimates["fixed", "mean"], 
                 bmaResults[["bma"]]$estimates["random", "mean"],
                 bmaResults[["random"]]$estimates["tau", "mean"],
-                bmaResults[["bma"]]$estimates["averaged", "mean"])
+                bmaResults[["bma"]]$estimates["averaged", "mean"],
+                NA)
     meanSD <- c(bmaResults[["bma"]]$estimates["fixed", "sd"], 
                 bmaResults[["bma"]]$estimates["random", "sd"], 
                 bmaResults[["random"]]$estimates["tau", "sd"],
-                bmaResults[["bma"]]$estimates["averaged", "sd"])
+                bmaResults[["bma"]]$estimates["averaged", "sd"],
+                NA)
     lower <- c(bmaResults[["bma"]]$estimates["fixed", "2.5%"], 
                bmaResults[["bma"]]$estimates["random", "2.5%"], 
                bmaResults[["random"]]$estimates["tau", "2.5%"],
-               bmaResults[["bma"]]$estimates["averaged", "2.5%"])
+               bmaResults[["bma"]]$estimates["averaged", "2.5%"],
+               NA)
     upper <- c(bmaResults[["bma"]]$estimates["fixed", "97.5%"], 
                bmaResults[["bma"]]$estimates["random", "97.5%"], 
                bmaResults[["random"]]$estimates["tau", "97.5%"],
-               bmaResults[["bma"]]$estimates["averaged", "97.5%"])
+               bmaResults[["bma"]]$estimates["averaged", "97.5%"],
+               NA)
     BF <- c(bmaResults[["bf"]]$BF["fixed_H1", "fixed_H0"], 
             bmaResults[["bf"]]$BF["random_H1", "random_H0"], 
             bmaResults[["bf"]]$BF["random_H1", "fixed_H1"],
-            bmaResults[["bf"]]$inclusionBF)
+            bmaResults[["bf"]]$inclusionBF,
+            .bmaCalculateBFHeterogeneity(prior_models = bmaResults[["models"]]$prior, 
+                                         posterior_models = bmaResults[["models"]]$posterior))
   }
   else if(options[["modelSpecification"]] == "RE"){
     meanES <- bmaResults[["random"]]$estimates[, "mean"]
@@ -587,11 +621,18 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
             bmaResults[["bf"]]$BF["random", "fixed"])
   }
   
+  
+  footenoteAverageBFtau <- "Bayes factor of the random effects model over the fixed effects model."
+  footenoteOrderedBFtau <- "Bayes factor of the (unconstrained/constrained) random effects model over the fixed effects model."
+  
   if(options[["modelSpecification"]] == "CRE") 
     creBF <- bmaResults[["bf"]]$BF["ordered", "random"]
 
   if(options[["BF"]] == "BF01"){
     BF <- 1/BF
+    footenoteAverageBFtau <- "Bayes factor of the fixed effects model over the random effects model."
+    footenoteOrderedBFtau <- "Bayes factor of the fixed effects model over the (unconstrained/constrained) random effects model."
+    
     if(options[["modelSpecification"]] == "CRE"){
       creBF <- 1/bmaResults[["bf"]]$BF["ordered", "random"]
     }
@@ -615,18 +656,29 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   
   bmaTable$addRows(rows)
   
+  if(options$modelSpecification == "RE") bmaTable$addFootnote(footenoteAverageBFtau, colNames = "BF", rowNames = "row1")
+  
   if(options$modelSpecification == "BMA") {
     bmaTable$addFootnote("Weighed average over the fixed effects model and the random effects model.",
-                         colNames = "model", rowNames="row4") 
+                         colNames = "model", rowNames="row3") 
+    bmaTable$addFootnote(footenoteAverageBFtau,
+                         colNames = "BF", rowNames = c("row2", "row4"))
     # bmaTable$addFootnote("The estimates for the model averaged \u03C4 are not yet available. It is currently in development.",
     #                    colNames = "parameter", rowNames="row5") 
   }
+  
+  if(options[["BF"]] == "BF01" || options[["BF"]] == "logBF10"){
+    footnoteCREbf <- "Bayes factor of the ordered effects H\u2081 over the fixed effects H\u2081. The Bayes factor for the ordered effects H\u2081 versus the unconstrained (random) effects H\u2081 model is "
+  } else if(options[["BF"]] == "BF10"){
+    footnoteCREbf <- "Bayes factor of the fixed effects H\u2081 over the ordered effects H\u2081. The Bayes factor for the random effects H\u2081 versus the ordered effects H\u2081 model is "
+  }
+  
   if(options$modelSpecification == "CRE"){
-    bmaTable$addFootnote(paste0("Bayes factor of the constrained random effects H\u2081 versus the fixed effects H\u2080 model. The Bayes factor for the ordered H\u2081 versus the unconstrained (random) effects H\u2081 model is ",
+    bmaTable$addFootnote(paste0(footnoteCREbf,
                                 round(creBF, 3),
                                 "."),
-                         colNames = "BF", rowNames="row2") 
-    
+                         colNames = "BF", rowNames="row1") 
+    bmaTable$addFootnote(footenoteOrderedBFtau, colNames = "BF", rowNames = c("row2", "row4"))
   }
 }
 
@@ -930,6 +982,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       yPrior <- bmaResults[["bma"]]$yPrior
       xPost <- bmaResults[["bma"]]$xPost
       yPost <- bmaResults[["bma"]]$yPost
+      dfPointsY <- bmaResults[["bma"]]$dfPointsY
     } else if(options[["modelSpecification"]] == "RE"){
       int <- c(bmaResults[["bma"]]$estimates["random", "2.5%"], bmaResults[["bma"]]$estimates["random", "97.5%"])
       postName <- "Random"
@@ -937,6 +990,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       yPrior <- bmaResults[["random"]]$yPrior
       xPost <- bmaResults[["random"]]$xPost
       yPost <- bmaResults[["random"]]$yPost
+      dfPointsY <- bmaResults[["random"]]$dfPointsY
     } else if(options[["modelSpecification"]] == "FE"){
       int <- c(bmaResults[["bma"]]$estimates["fixed", "2.5%"], bmaResults[["bma"]]$estimates["fixed", "97.5%"])
       postName <- "Fixed"
@@ -944,6 +998,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       yPrior <- bmaResults[["fixed"]]$yPrior
       xPost <- bmaResults[["fixed"]]$xPost
       yPost <- bmaResults[["fixed"]]$yPost
+      dfPointsY <- bmaResults[["fixed"]]$dfPointsY
     } else if(options[["modelSpecification"]] == "CRE"){
       int <- c(bmaResults[["bma"]]$estimates["ordered", "2.5%"], bmaResults[["bma"]]$estimates["ordered", "97.5%"])
       postName <- "Ordered"
@@ -952,9 +1007,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       } else {
         labelsModel <- c(expression("Ordered H"[1]), expression("Prior H"[1]))
       }
-      yPrior <- bmaResults[["bma"]]$yPrior
-      xPost <- bmaResults[["bma"]]$xPost
-      yPost <- bmaResults[["bma"]]$yPost
+      yPrior <- bmaResults[["ordered"]]$yPrior
+      xPost <- bmaResults[["ordered"]]$xPost
+      yPost <- bmaResults[["ordered"]]$yPost
+      dfPointsY <- bmaResults[["ordered"]]$dfPointsY
     }
     # Heterogeneity priors
   } else if(type == "SE"){
@@ -964,12 +1020,14 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       yPrior <- bmaResults[["random"]]$yPriorTau
       xPost <- bmaResults[["random"]]$xPostTau
       yPost <- bmaResults[["random"]]$yPostTau
+      dfPointsY <- data.frame(prior = yPrior[which(xPost == 0)], posterior = yPost[which(xPost == 0)])
     } else if (options[["modelSpecification"]] == "CRE"){
       int <- c(bmaResults[["ordered"]]$estimates["tau", "2.5%"], bmaResults[["ordered"]]$estimates["tau", "97.5%"])
       postName <- "Ordered"
       yPrior <- bmaResults[["ordered"]]$yPriorTau
       xPost <- bmaResults[["ordered"]]$xPostTau
       yPost <- bmaResults[["ordered"]]$yPostTau
+      dfPointsY <- data.frame(prior = yPrior[which(xPost == 0)], posterior = yPost[which(xPost == 0)])
     }
 
     xlab <- expression("Heterogeneity "*tau)
@@ -1038,6 +1096,12 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     if(options$modelSpecification == "RE") CRI <- bmaResults[["bma"]]$estimates["random", c("2.5%", "97.5%")]
     if(options$modelSpecification == "BMA") CRI <- bmaResults[["bma"]]$estimates["averaged", c("2.5%", "97.5%")]
     if(options$modelSpecification == "CRE") CRI <- bmaResults[["ordered"]]$estimates["average_effect", c("2.5%", "97.5%")]
+    
+    if(options$modelSpecification == "FE") med <- bmaResults[["bma"]]$estimates["fixed", "mean"]
+    if(options$modelSpecification == "RE") med <- bmaResults[["bma"]]$estimates["random", "mean"]
+    if(options$modelSpecification == "BMA") med <- bmaResults[["bma"]]$estimates["averaged", "mean"]
+    if(options$modelSpecification == "CRE") med <- bmaResults[["ordered"]]$estimates["average_effect", "mean"]
+    
   } else if (type == "SE"){
     if(options$modelSpecification == "RE") BF <- bmaResults[["bf"]]$BF["random_H1", "fixed_H1"]
     if(options$modelSpecification == "BMA") BF <- bmaResults[["bf"]]$BF["random_H1", "fixed_H1"]
@@ -1045,13 +1109,18 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     
     if(options$modelSpecification == "RE") CRI <- bmaResults[["random"]]$estimates["tau", c("2.5%", "97.5%")]
     if(options$modelSpecification == "BMA") CRI <- bmaResults[["random"]]$estimates["tau", c("2.5%", "97.5%")]
-    if(options$modelSpecification == "CRE") CRI <- bmaResults[["random"]]$estimates["tau", c("2.5%", "97.5%")]
+    if(options$modelSpecification == "CRE") CRI <- bmaResults[["ordered"]]$estimates["tau", c("2.5%", "97.5%")]
+    
+    
+    if(options$modelSpecification == "RE" || options$modelSpecification == "BMA")  med <- bmaResults[["random"]]$estimates["tau", "mean"]
+    if(options$modelSpecification == "CRE") med <- bmaResults[["ordered"]]$estimates["tau", "mean"]
   }
   
   if(!options[["addInfo"]]){
     BF <- NULL
     CRI <- NULL
     bfType <- NULL
+    med <- NULL
   } else {
     if(options[["BF"]] == "BF01") {
       BF    <- 1/BF
@@ -1064,6 +1133,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     }
   }
   
+  # dfPoints <- data.frame(x = c(0, 0), y = c())
+  
   # plot <- ggplot2::ggplot(data = df, mapping = ggplot2::aes(x = x, y = y, color = g, linetype = g)) +
   #   JASPgraphs::geom_line() +
   #   ggplot2::scale_x_continuous(xlab, breaks = getPrettyAxisBreaks(df$x)) +
@@ -1073,6 +1144,14 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   #   plot <- plot + 
   #     ggplot2::geom_vline(xintercept = 0, linetype = "dotted")
   # }
+  
+  pizzaTxt <- c("data | f H1", "data | r H1")
+  bfSubscripts <-  c("BF[italic(rf)]", "BF[italic(fr)]")
+  
+  if(options$modelSpecification == "CRE"){
+    pizzaTxt <- c("data | f H1", "data | o H1")
+    bfSubscripts <-  c("BF[italic(of)]", "BF[italic(fo)]")
+  }
 
   xr   <- range(df$x)
   idx  <- which.max(df$y)
@@ -1082,12 +1161,31 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   } else {
     legend.position = c(0.80, 0.875)
   }
-  plot <- PlotPriorAndPosterior(dfLines = df,
-                                lineColors = valuesCol,
-                                BF = BF,
-                                CRI = CRI,
-                                bfType = bfType,
-                                xName = xlab)
+  
+  dfPoints <- data.frame(x = c(0, 0), y = c(dfPointsY[1], dfPointsY[2]), g = c("Prior", "Posterior"))
+  
+  if(type == "ES"){
+    plot <- PlotPriorAndPosterior(dfLines = df,
+                                  # dfPoints = dfPoints,
+                                  lineColors = valuesCol, 
+                                  BF = BF,
+                                  CRI = CRI,
+                                  bfType = bfType,
+                                  xName = xlab,
+                                  median = med,
+                                  medianTxt = "Mean:")
+  } else if(type == "SE"){
+    plot <- PlotPriorAndPosterior(dfLines = df,
+                                  lineColors = valuesCol,
+                                  BF = BF,
+                                  CRI = CRI,
+                                  bfType = bfType,
+                                  xName = xlab,
+                                  bfSubscripts = bfSubscripts,
+                                  pizzaTxt = pizzaTxt,
+                                  median = med,
+                                  medianTxt = "Mean:")
+  }
 
   .extraPost <- function(plot, int, xPost, yPost){
       
@@ -1389,7 +1487,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
               ggplot2::geom_point(ggplot2::aes(shape = as.factor(dfBoth$g), colour = as.factor(dfBoth$g)), size = dfBoth$weight_scaled) +
               ggplot2::geom_errorbarh(ggplot2::aes(xmin = dfBoth$lower, xmax = dfBoth$upper, colour = as.factor(dfBoth$g)), height = .1, show.legend = FALSE) +
               ggplot2::scale_y_continuous(breaks = c(df$y, yDiamond), labels = c(as.character(df$studyLabels), model),
-                                          sec.axis = ggplot2::sec_axis(~ ., breaks = c(df$y, yEst, yDiamond), labels = c(text_observed, text_estimated, textDiamond))) +
+                                          sec.axis = ggplot2::sec_axis(~ ., breaks = c(df$y, yEst, yDiamond), labels = c(text_observed, text_estimated, textDiamond)), expand = c(0, 0.5)) +
               ggplot2::scale_color_manual("", values = c("slategrey", "black"), labels = c("Estimated", "Observed")) +
               ggplot2::scale_shape_manual("", values = c(16, 15)) +
               ggplot2::guides(shape = ggplot2::guide_legend(reverse=TRUE, override.aes = list(size=3)), colour = ggplot2::guide_legend(reverse=TRUE)) +
