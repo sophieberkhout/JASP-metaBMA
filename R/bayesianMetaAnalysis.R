@@ -259,17 +259,17 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 
   # Ordered effects model
   if(options[["modelSpecification"]] == "CRE"){
-    if(options$direction == "allPos") xSeq <- seq(-0.05, anchorPoint + 4, .01)
-    if(options$direction == "allNeg") xSeq <- seq(anchorPoint - 4, 0.05, .01)
     
     ordered                 <- list()
     ordered[["estimates"]]  <- results$meta$ordered$estimates
     ordered[["summary"]]    <- rstan::summary(results$meta$ordered$stanfit_dstudy)$summary
     ## Prior and posterior - effect size
     anchorPoint             <- results$meta$ordered$estimates[2, "mean"]
+    if(options$direction == "allPos") xSeq <- seq(-0.05, anchorPoint + 4, .01)
+    if(options$direction == "allNeg") xSeq <- seq(anchorPoint - 4, 0.05, .01)
     ordered[["xPost"]]   <- xSeq
-    ordered[["yPost"]]   <- results$meta$ordered$posterior_d(ordered[["xPostTau"]])
-    ordered[["yPrior"]]  <- results$meta$ordered$prior_d(ordered[["xPostTau"]])
+    ordered[["yPost"]]   <- results$meta$ordered$posterior_d(ordered[["xPost"]])
+    ordered[["yPrior"]]  <- results$meta$ordered$prior_d(ordered[["xPost"]])
     
     ## Prior and posterior - heterogeneity
     anchorPoint             <- results$meta$ordered$estimates[2, "mean"]
@@ -1029,63 +1029,60 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
       yPost <- bmaResults[["ordered"]]$yPostTau
       dfPointsY <- data.frame(prior = yPrior[which(xPost == 0)], posterior = yPost[which(xPost == 0)])
     }
+    
+    if(options[["modelSpecification"]] == "BMA") valuesCol <- c("#009E73", "black")
+    
 
     xlab <- expression("Heterogeneity "*tau)
     xlim <- c(0, 3)
     alpha <- 0.3
 
     if(options[["modelSpecification"]] == "BMA") labelsModel <- c(expression("Random H"[1]), expression("Prior H"[1]))
-    if(options[["modelSpecification"]] == "CRE") labelsModel <- c(expression("Ordered H"[1]), expression("Random H"[1]), expression("Prior H"[1]))
+    if(options[["modelSpecification"]] == "CRE") labelsModel <- c(expression("Ordered H"[1]), expression("Prior H"[1]))
     if(options[["modelSpecification"]] == "FE") labelsModel <- c(expression("Fixed H"[1]), expression("Prior H"[1]))
     if(options[["modelSpecification"]] == "RE") labelsModel <- c(expression("Random H"[1]), expression("Prior H"[1]))
   }
   
-  # limitsX <- yPost
-  # xPost <- xPost[limitsX > 0.0001]
-  x2 <- xPost
-
-  # xPost[which.min(xPost)] <- min(xPost) - 0.05
-  # xPost[which.max(xPost)] <- max(xPost) + 0.05
-  
-  x2 <- c(xPost, xPost)
-  yPostSE <- c(bmaResults[["fixed"]]$yPost, bmaResults[["random"]]$yPost)
-  g2 <- rep(c("Fixed", "Random"), each = length(xPost))
-  
   df <- data.frame(x = c(xPost, xPost), y = c(yPrior, yPost), g = rep(c("Prior", postName), each = length(xPost)))
-  df$g <- factor(df$g, levels = c(postName, "Prior"))
-  
-  if(type == "ES" && (options[["modelSpecification"]] == "BMA" || options[["modelSpecification"]] == "CRE")){
-    df2 <- data.frame(x = x2, y = yPostSE, g = g2)
-    df3 <- rbind(df2, df)
+
+  if(options$addLines && (options$modelSpecification == "BMA" || options$modelSpecification == "CRE")){
+    if(type == "ES"){
+      yPostES <- c(bmaResults[["fixed"]]$yPost, bmaResults[["random"]]$yPost)
+      xPostES <- c(bmaResults[["fixed"]]$xPost, bmaResults[["random"]]$xPost)
+      gPostES <- c(rep("Fixed", length(bmaResults[["fixed"]]$xPost)), rep("Random", length(bmaResults[["random"]]$xPost)))
+      dfPost <- data.frame(x = xPostES,  y = yPostES, g = gPostES)
+      if(options[["modelSpecification"]] == "BMA"){
+        valuesCol <- c("#fcae91ff", "#009E73", "black", "black")
+      } else if(options[["modelSpecification"]] == "CRE"){
+        valuesCol <- c("#fcae91ff", "black", "#009E73", "black")
+      }
+      valuesLine <- c("solid", "solid", "solid", "dotted")
+    } else if(type == "SE"){
+      yPostSE <- bmaResults[["random"]]$yPostTau
+      xPostSE <- bmaResults[["random"]]$xPostTau
+      gPostSE <- rep("Random", length(bmaResults[["random"]]$xPostTau))
+      dfPost <- data.frame(x = xPostSE,  y = yPostSE, g = gPostSE)
+      if(options[["modelSpecification"]] == "CRE"){
+        valuesCol <- c("black", "#009E73", "black")
+        valuesLine <- c("solid", "solid", "dotted")
+        labelsModel <- c(expression("Ordered H"[1]), expression("Random H"[1]), expression("Prior H"[1]))
+      }
+    }
+    df <- rbind(df, dfPost)
   }
   
-  if(type == "ES" && options[["addLines"]] && (options[["modelSpecification"]] == "BMA" || options[["modelSpecification"]] == "CRE")) {
-    df <- df3
-    valuesLine <- c("solid", "solid", "solid", "dotted")
-    if(options[["modelSpecification"]] == "BMA"){
-      valuesCol <- c("#fcae91ff", "#009E73", "black", "black")
-    } else if(options[["modelSpecification"]] == "CRE"){
-      valuesCol <- c("#fcae91ff", "black", "#009E73", "black")
+  if(!options$addLines || options$modelSpecification == "RE" || options$modelSpecification == "FE"){
+    df$g <- factor(df$g, levels = c(postName, "Prior"))
+  } else if(options$addLines){
+    if(type == "ES"){
+      if(options$modelSpecification == "BMA") df$g <- factor(df$g, levels = c("Fixed", "Random", "Averaged", "Prior"))
+      if(options$modelSpecification == "CRE") df$g <- factor(df$g, levels = c("Fixed", "Ordered", "Random", "Prior"))
+    } else if(type == "SE"){
+      if(options$modelSpecification == "BMA") df$g <- factor(df$g, levels = c("Random", "Prior"))
+      if(options$modelSpecification == "CRE") df$g <- factor(df$g, levels = c("Ordered", "Random", "Prior"))
     }
   }
-  
-  if(type == "SE" && options[["modelSpecification"]] == "BMA") 
-    valuesCol <- c("#009E73", "black")
-  
-  if(options[["modelSpecification"]] == "CRE" && type == "ES")
-    df$g <- factor(df$g, levels = c("Fixed", "Ordered", "Random", "Prior"))
 
-  if(options[["modelSpecification"]] == "CRE" && type == "SE" && options[["addLines"]]){
-    
-    df2 <- data.frame(x = bmaResults[["random"]]$xPost, y = bmaResults[["random"]]$yPost, g = rep("Random", each = length(bmaResults[["random"]]$xPost)))
-    df3 <- rbind(df2, df)
-    df <- df3
-    
-    df$g <- factor(df$g, levels = c("Ordered", "Random", "Prior"))
-    valuesCol <- c("black", "#009E73", "black")
-    valuesLine <- c("solid", "solid", "dotted")
-  }
-  
   if(type == "ES"){
     if(options$modelSpecification == "FE") BF <- bmaResults[["bf"]]$fixedBF["fixed_H1", "fixed_H0"]
     if(options$modelSpecification == "RE") BF <- bmaResults[["bf"]]$randomBF["random_H1", "random_H0"]
@@ -1189,7 +1186,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
 
   .extraPost <- function(plot, int, xPost, yPost){
       
-    plot <- plot + ggplot2::geom_segment(x = 0, y = 0, xend = 0, yend = Inf, linetype = "dotted", color = "black")
+    # plot <- plot + ggplot2::geom_segment(x = 0, y = 0, xend = 0, yend = Inf, linetype = "dotted", color = "black")
     
     if(options[["shade"]]){
       shadeData <- data.frame(x = xPost[xPost < max(int) & xPost > min(int)], y = yPost[xPost < max(int) & xPost > min(int)])
@@ -1623,6 +1620,16 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
     bfType <- "LogBF10"
   } else {
     bfType <- "BF10" 
+    
+    
+  }
+  
+  pizzaTxt <- c("data | f H1", "data | r H1")
+  bfSubscripts <-  c("BF[italic(rf)]", "BF[italic(fr)]")
+  
+  if(options$modelSpecification == "CRE"){
+    pizzaTxt <- c("data | f H1", "data | o H1")
+    bfSubscripts <-  c("BF[italic(of)]", "BF[italic(fo)]")
   }
 
   if(any(is.infinite(BFs))){
@@ -1633,6 +1640,8 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   if(nrow(dataset) < 40) plotLineOrPoint <- "point" else plotLineOrPoint <- "line"
   
   df <- data.frame(x = 1:nrow(dataset), y = log(BFs))
+  
+  if(type == "ES"){
 
   plot <- JASPgraphs::PlotRobustnessSequential(dfLines = df,
                                                plotLineOrPoint = plotLineOrPoint,
@@ -1640,6 +1649,16 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                                BF = BFs[nrow(dataset)],
                                                bfType = bfType,
                                                hasRightAxis = TRUE)
+  } else if(type == "SE"){
+    plot <- JASPgraphs::PlotRobustnessSequential(dfLines = df,
+                                                 plotLineOrPoint = plotLineOrPoint,
+                                                 xName = "Number of studies",
+                                                 BF = BFs[nrow(dataset)],
+                                                 bfType = bfType,
+                                                 bfSubscripts = bfSubscripts,
+                                                 pizzaTxt = pizzaTxt,
+                                                 hasRightAxis = TRUE)
+  }
   
   seqPlot$plotObject <- plot
   return()
