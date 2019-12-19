@@ -159,7 +159,7 @@ Form
 		RadioButtonGroup
 		{
 			name:	"BF"
-			title: 	qsTr("Bayes Factor")
+			title: 	qsTr("Bayes factor")
 
 			RadioButton
 			{
@@ -549,7 +549,7 @@ Form
 
 						RadioButton
 						{
-							id:			forestObserved
+							id:		forestObserved
 							name: 		"plotForestObserved"
 							label: 		qsTr("Observed")
 							checked: 	true
@@ -616,15 +616,14 @@ Form
 
 				CheckBox
 				{
-					name: 	"shade"
-					label: 	qsTr("Shade 95% CI")
-				}
-
-				CheckBox
-				{
 					name: "addLines"
 					enabled: checkBMA.checked || checkCRE.checked
 					label: qsTr("Add fixed and random effects posterior")
+				}
+				CheckBox
+				{
+					name: 	"shade"
+					label: 	qsTr("Shade 95% CI")
 				}
 			}
 
