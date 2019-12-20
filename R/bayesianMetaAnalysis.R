@@ -1674,7 +1674,7 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
   } else if(type == "SE"){
     plot <- JASPgraphs::PlotRobustnessSequential(dfLines = df,
                                                  plotLineOrPoint = plotLineOrPoint,
-                                                 xName = "Number of studies",
+                                                 xName = "Studies",
                                                  BF = BFs[nrow(dataset)],
                                                  bfType = bfType,
                                                  bfSubscripts = bfSubscripts,
