@@ -1680,7 +1680,10 @@ BayesianMetaAnalysis <- function(jaspResults, dataset, options) {
                                                  bfSubscripts = bfSubscripts,
                                                  pizzaTxt = pizzaTxt,
                                                  hasRightAxis = TRUE,
-                                                 yName = yName)
+                                                 yName = yName,
+                                                 addEvidenceArrowText = FALSE,
+                                                 evidenceLeveltxt = FALSE
+                                                 )
   }
   
   # plot <- plot + ggplot2::xlim(xlim[1], xlim[2])
